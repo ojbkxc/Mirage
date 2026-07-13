@@ -1,0 +1,3 @@
+-keep class wx.mirage.** { *; }
+-keep class org.luckypray.dexkit.** { *; }
+-keepattributes *Annotation*
