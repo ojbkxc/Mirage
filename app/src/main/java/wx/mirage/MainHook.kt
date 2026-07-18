@@ -9,12 +9,22 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 import org.luckypray.dexkit.DexKitBridge
 import wx.mirage.config.ConfigManager
 import wx.mirage.config.HookStatus
+import wx.mirage.hook.ChatInputHook
 import wx.mirage.hook.ContactHook
 import wx.mirage.hook.ConversationHook
+import wx.mirage.hook.ConversationLongClickHook
+import wx.mirage.hook.GroupMemberHook
+import wx.mirage.hook.LongPressHook
+import wx.mirage.hook.MessageAntiRevokeHook
+import wx.mirage.hook.MessageIndicatorHook
+import wx.mirage.hook.MiscHook
+import wx.mirage.hook.MomentsAdRemovalHook
 import wx.mirage.hook.MomentsHook
 import wx.mirage.hook.NotificationHook
-import wx.mirage.hook.GroupMemberHook
 import wx.mirage.hook.SearchHook
+import wx.mirage.hook.SearchInputHook
+import wx.mirage.hook.TempMomentsUnhideHook
+import wx.mirage.hook.VoiceCallHook
 import wx.mirage.lifecycle.HookLifecycleListener
 import wx.mirage.receiver.ConfigReceiver
 import wx.mirage.util.LogUtil
@@ -295,7 +305,7 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
 
             // 4. 清理 BroadcastReceiver 资源
             try {
-                ConfigReceiver().cleanup()
+                ConfigReceiver.cleanup()
             } catch (e: Throwable) {
                 LogUtil.w(Constants.MODULE_TAG, "Error cleaning up ConfigReceiver: ${e.message}")
             }
@@ -319,12 +329,22 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      */
     private fun clearAllDexKitCaches() {
         try {
+            ChatInputHook.clearDexKitCache()
             ContactHook.clearDexKitCache()
             ConversationHook.clearDexKitCache()
+            ConversationLongClickHook.clearDexKitCache()
             GroupMemberHook.clearDexKitCache()
+            LongPressHook.clearDexKitCache()
+            MessageAntiRevokeHook.clearDexKitCache()
+            MessageIndicatorHook.clearDexKitCache()
+            MiscHook.clearDexKitCache()
+            MomentsAdRemovalHook.clearDexKitCache()
             MomentsHook.clearDexKitCache()
             NotificationHook.clearDexKitCache()
             SearchHook.clearDexKitCache()
+            SearchInputHook.clearDexKitCache()
+            TempMomentsUnhideHook.clearDexKitCache()
+            VoiceCallHook.clearDexKitCache()
             LogUtil.d(Constants.MODULE_TAG, "All DexKit caches cleared")
         } catch (e: Throwable) {
             LogUtil.w(Constants.MODULE_TAG, "Error clearing DexKit caches: ${e.message}")
@@ -339,12 +359,22 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         try {
             LogUtil.i(Constants.MODULE_TAG, "Notifying all Hook modules of unregistration...")
             val hooks = listOf(
+                ChatInputHook as HookLifecycleListener,
                 ContactHook as HookLifecycleListener,
                 ConversationHook as HookLifecycleListener,
+                ConversationLongClickHook as HookLifecycleListener,
                 GroupMemberHook as HookLifecycleListener,
+                LongPressHook as HookLifecycleListener,
+                MessageAntiRevokeHook as HookLifecycleListener,
+                MessageIndicatorHook as HookLifecycleListener,
+                MiscHook as HookLifecycleListener,
+                MomentsAdRemovalHook as HookLifecycleListener,
                 MomentsHook as HookLifecycleListener,
                 NotificationHook as HookLifecycleListener,
-                SearchHook as HookLifecycleListener
+                SearchHook as HookLifecycleListener,
+                SearchInputHook as HookLifecycleListener,
+                TempMomentsUnhideHook as HookLifecycleListener,
+                VoiceCallHook as HookLifecycleListener
             )
             for (hook in hooks) {
                 try {
@@ -598,12 +628,22 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         // 按顺序注册各模块 Hook，每个模块独立 try-catch，互不影响
         val hookModules = listOf(
+            Triple("ChatInputHook", { ChatInputHook.init(lpparam) }, ChatInputHook as HookLifecycleListener),
             Triple("ContactHook", { ContactHook.init(lpparam) }, ContactHook as HookLifecycleListener),
             Triple("ConversationHook", { ConversationHook.init(lpparam) }, ConversationHook as HookLifecycleListener),
+            Triple("ConversationLongClickHook", { ConversationLongClickHook.init(lpparam) }, ConversationLongClickHook as HookLifecycleListener),
+            Triple("GroupMemberHook", { GroupMemberHook.init(lpparam) }, GroupMemberHook as HookLifecycleListener),
+            Triple("LongPressHook", { LongPressHook.init(lpparam) }, LongPressHook as HookLifecycleListener),
+            Triple("MessageAntiRevokeHook", { MessageAntiRevokeHook.init(lpparam) }, MessageAntiRevokeHook as HookLifecycleListener),
+            Triple("MessageIndicatorHook", { MessageIndicatorHook.init(lpparam) }, MessageIndicatorHook as HookLifecycleListener),
+            Triple("MiscHook", { MiscHook.init(lpparam) }, MiscHook as HookLifecycleListener),
+            Triple("MomentsAdRemovalHook", { MomentsAdRemovalHook.init(lpparam) }, MomentsAdRemovalHook as HookLifecycleListener),
             Triple("MomentsHook", { MomentsHook.init(lpparam) }, MomentsHook as HookLifecycleListener),
             Triple("NotificationHook", { NotificationHook.init(lpparam) }, NotificationHook as HookLifecycleListener),
             Triple("SearchHook", { SearchHook.init(lpparam) }, SearchHook as HookLifecycleListener),
-            Triple("GroupMemberHook", { GroupMemberHook.init(lpparam) }, GroupMemberHook as HookLifecycleListener)
+            Triple("SearchInputHook", { SearchInputHook.init(lpparam) }, SearchInputHook as HookLifecycleListener),
+            Triple("TempMomentsUnhideHook", { TempMomentsUnhideHook.init(lpparam) }, TempMomentsUnhideHook as HookLifecycleListener),
+            Triple("VoiceCallHook", { VoiceCallHook.init(lpparam) }, VoiceCallHook as HookLifecycleListener)
         )
 
         var successCount = 0
@@ -634,6 +674,17 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
             HookStatus.ERROR
         }
         LogUtil.i(Constants.MODULE_TAG, "Done - $successCount success, $failCount failed (status: ${hookStatus.description})")
+
+        // 注册广播接收器
+        try {
+            appContext?.let { ctx ->
+                ConfigReceiver.register(ctx)
+                LogUtil.i(Constants.MODULE_TAG, "ConfigReceiver registered")
+            }
+        } catch (e: Throwable) {
+            LogUtil.w(Constants.MODULE_TAG, "Failed to register ConfigReceiver: ${e.message}")
+        }
+
         return successCount > 0
     }
 

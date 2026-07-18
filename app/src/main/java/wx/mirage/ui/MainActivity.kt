@@ -1,18 +1,21 @@
 package wx.mirage.ui
 
 import android.os.Bundle
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import wx.mirage.Constants
 import wx.mirage.R
 import wx.mirage.config.ConfigManager
+import wx.mirage.config.FriendToggle
 import wx.mirage.config.WxIdBlacklist
+import wx.mirage.manager.ModuleConfigManager
+import wx.mirage.model.FriendConfig
 import wx.mirage.util.BackupManager
 import wx.mirage.util.ConfigValidator
 import wx.mirage.util.LogUtil
@@ -21,14 +24,11 @@ import wx.mirage.util.LogUtil
  * Mirage 主管理界面
  *
  * 功能：
- * 1. 显示模块状态信息（DexKit 状态、进程信息、微信版本等）
- * 2. 管理隐藏好友列表（添加/删除 wxId）
- * 3. 好友标签系统（为每个隐藏好友设置自定义标签）
- * 4. 备份管理（创建/恢复/列出/删除备份）
- * 5. 模块开关控制（启用/禁用 Mirage）
- * 6. 配置验证（JSON 格式验证）
- *
- * 使用 [LabelAdapter] 为隐藏好友列表提供彩色标签显示。
+ * 1. 模块开关控制
+ * 2. 添加/删除隐藏好友
+ * 3. 每个好友的独立开关配置（总开关、语音通话、通知、主页伪装、聊天记录、联系人、朋友圈、其他杂项）
+ * 4. 备份管理
+ * 5. 导入/导出
  */
 class MainActivity : AppCompatActivity() {
 
@@ -36,10 +36,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var addButton: Button
     private lateinit var hiddenList: ListView
     private lateinit var enableSwitch: Switch
-    private lateinit var backupButton: Button
-    private lateinit var restoreButton: Button
-    private lateinit var validateButton: Button
-    private lateinit var labelInput: EditText
+    private lateinit var listHeader: TextView
+    private lateinit var exportButton: Button
+    private lateinit var importButton: Button
+    private lateinit var clearAllButton: Button
+    private lateinit var refreshButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,171 +52,279 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        wxIdInput = findViewById(R.id.wxIdInput)
-        addButton = findViewById(R.id.addButton)
-        hiddenList = findViewById(R.id.hiddenList)
-        enableSwitch = findViewById(R.id.enableSwitch)
-        backupButton = findViewById(R.id.backupButton)
-        restoreButton = findViewById(R.id.restoreButton)
-        validateButton = findViewById(R.id.validateButton)
-        labelInput = findViewById(R.id.labelInput)
+        wxIdInput = findViewById(R.id.editWxId) ?: error("editWxId not found")
+        addButton = findViewById(R.id.btnAdd)
+        hiddenList = findViewById(R.id.listView)
+        enableSwitch = findViewById(R.id.switchEnabled)
+        listHeader = findViewById(R.id.tvListHeader)
+        exportButton = findViewById(R.id.btnExport)
+        importButton = findViewById(R.id.btnImport)
+        clearAllButton = findViewById(R.id.btnClearAll)
+        refreshButton = findViewById(R.id.btnRefresh)
 
-        enableSwitch.isChecked = ConfigManager.isModuleEnabled()
+        enableSwitch.isChecked = ConfigManager.isEnabled(this)
     }
 
     private fun setupListeners() {
         addButton.setOnClickListener { addWxId() }
         enableSwitch.setOnCheckedChangeListener { _, isChecked ->
-            ConfigManager.setModuleEnabled(isChecked)
+            ConfigManager.setEnabled(this, isChecked)
             LogUtil.i(Constants.MODULE_TAG, "Module enabled: $isChecked")
         }
 
+        // 短按：打开好友详细配置
+        hiddenList.setOnItemClickListener { _, _, position, _ ->
+            showFriendConfigDialog(position)
+        }
+
+        // 长按：删除好友
         hiddenList.setOnItemLongClickListener { _, _, position, _ ->
             showDeleteDialog(position)
             true
         }
 
-        hiddenList.setOnItemClickListener { _, _, position, _ ->
-            showEditLabelDialog(position)
-        }
-
-        backupButton.setOnClickListener { createBackup() }
-        restoreButton.setOnClickListener { showRestoreBackupDialog() }
-        validateButton.setOnClickListener { validateConfig() }
+        refreshButton.setOnClickListener { updateHiddenList() }
+        exportButton.setOnClickListener { exportConfig() }
+        importButton.setOnClickListener { importConfig() }
+        clearAllButton.setOnClickListener { showClearAllDialog() }
     }
 
     private fun addWxId() {
         val wxId = wxIdInput.text.toString().trim()
         if (wxId.isEmpty()) {
-            Toast.makeText(this, R.string.empty_wx_id, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "请输入微信 ID", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (ConfigValidator.isValidWxId(wxId)) {
-            val label = labelInput.text.toString().trim()
-            val success = if (label.isNotEmpty()) {
-                WxIdBlacklist.addWxIdWithLabel(wxId, label)
-            } else {
-                WxIdBlacklist.addWxId(wxId)
-            }
-
+        if (ConfigValidator.isWxIdValid(wxId)) {
+            val success = ConfigManager.addHiddenWxId(this, wxId)
             if (success) {
                 wxIdInput.text.clear()
-                labelInput.text.clear()
                 updateHiddenList()
-                Toast.makeText(this, R.string.wx_id_added, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "已添加: $wxId", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, R.string.wx_id_exists, Toast.LENGTH_SHORT).show()
+                if (WxIdBlacklist.isBlacklisted(wxId)) {
+                    Toast.makeText(this, "该 wxId 为系统账户，不允许隐藏", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "添加失败：wxId 已存在或格式无效", Toast.LENGTH_SHORT).show()
+                }
             }
         } else {
-            Toast.makeText(this, R.string.invalid_wx_id, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "wxId 格式无效", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun updateHiddenList() {
-        val ids = WxIdBlacklist.getWxIds()
-        val labels = WxIdBlacklist.getLabels()
-        val adapter = LabelAdapter(this, ids, labels)
+        val ids = ConfigManager.getHiddenWxIds(this).toList()
+        val configs = ConfigManager.getAllFriendConfigs(this).mapValues { it.value.label }
+        val adapter = LabelAdapter(this, ids, configs)
         hiddenList.adapter = adapter
+        listHeader.text = "已隐藏的好友 (${ids.size}) - 点击配置，长按删除"
     }
 
     private fun showDeleteDialog(position: Int) {
-        val ids = WxIdBlacklist.getWxIds()
+        val ids = ConfigManager.getHiddenWxIds(this).toList()
         if (position >= ids.size) return
 
         val wxId = ids[position]
-        val label = WxIdBlacklist.getLabel(wxId)
-        val displayText = if (label.isNullOrEmpty()) wxId else "$wxId [$label]"
+        val config = ConfigManager.getFriendConfig(this, wxId)
+        val label = config?.label ?: ""
+        val displayText = if (label.isNotEmpty()) "$wxId [$label]" else wxId
 
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.confirm_delete))
-            .setMessage(getString(R.string.delete_confirm_message, displayText))
-            .setPositiveButton(R.string.delete) { _, _ ->
-                WxIdBlacklist.removeWxId(wxId)
+            .setTitle("确认删除")
+            .setMessage("确定要移除 \"$displayText\" 的隐藏吗？\n所有配置将被删除。")
+            .setPositiveButton("删除") { _, _ ->
+                ConfigManager.removeHiddenWxId(this, wxId)
                 updateHiddenList()
-                Toast.makeText(this, R.string.wx_id_deleted, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "已删除: $wxId", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun showEditLabelDialog(position: Int) {
-        val ids = WxIdBlacklist.getWxIds()
-        if (position >= ids.size) return
-
-        val wxId = ids[position]
-        val currentLabel = WxIdBlacklist.getLabel(wxId) ?: ""
-
-        val editText = EditText(this)
-        editText.setText(currentLabel)
-        editText.hint = getString(R.string.label_hint)
-
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.edit_label))
-            .setView(editText)
-            .setPositiveButton(R.string.save) { _, _ ->
-                val newLabel = editText.text.toString().trim()
-                WxIdBlacklist.setLabel(wxId, newLabel)
-                updateHiddenList()
-                Toast.makeText(this, R.string.label_saved, Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton(R.string.cancel, null)
+            .setNegativeButton("取消", null)
             .show()
     }
 
     // ========================================================================
-    // 备份管理
+    // 好友详细配置对话框
     // ========================================================================
 
-    private fun createBackup() {
-        val result = BackupManager.createBackup(this)
-        if (result.isSuccess) {
-            Toast.makeText(this, getString(R.string.backup_created, result.getOrDefault("")), Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, R.string.backup_failed, Toast.LENGTH_SHORT).show()
+    private fun showFriendConfigDialog(position: Int) {
+        val ids = ConfigManager.getHiddenWxIds(this).toList()
+        if (position >= ids.size) return
+
+        val wxId = ids[position]
+        val config = ConfigManager.getFriendConfig(this, wxId) ?: return
+
+        // 构建配置视图
+        val scrollView = android.widget.ScrollView(this)
+        val layout = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 24)
         }
+
+        val label = config.label
+
+        // 标题
+        layout.addView(TextView(this).apply {
+            text = "$wxId${if (label.isNotEmpty()) " [$label]" else ""}"
+            textSize = 16f
+            setPadding(0, 0, 0, 16)
+        })
+
+        // 伪装目标ID输入框（长按切换显示）
+        var disguiseTargetId = config.disguiseTargetId
+        val disguiseEditText = EditText(this).apply {
+            hint = "伪装目标 wxId（留空则不伪装）"
+            setText(disguiseTargetId)
+            minLines = 1
+            maxLines = 1
+            setPadding(0, 8, 0, 8)
+        }
+        layout.addView(TextView(this).apply {
+            text = "伪装目标ID:"
+            textSize = 13f
+            setPadding(0, 8, 0, 4)
+        })
+        layout.addView(disguiseEditText)
+
+        // 分隔线
+        layout.addView(View(this).apply {
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1
+            )
+            setBackgroundColor(0xFFE0E0E0.toInt())
+            setPadding(0, 8, 0, 8)
+        })
+
+        // 创建开关列表
+        val toggles = listOf(
+            "总开关" to FriendToggle.MASTER_SWITCH to config.masterSwitch,
+            "拦截语音视频通话" to FriendToggle.BLOCK_VOICE_CALL to config.blockVoiceCall,
+            "拦截消息通知" to FriendToggle.BLOCK_NOTIFICATION to config.blockNotification,
+            "主页好友列表伪装" to FriendToggle.DISGUISE_MAIN_PAGE to config.disguiseMainPage,
+            "聊天记录隐藏" to FriendToggle.HIDE_CHAT_HISTORY to config.hideChatHistory,
+            "联系人隐藏" to FriendToggle.HIDE_CONTACT to config.hideContact,
+            "朋友圈隐藏" to FriendToggle.HIDE_MOMENTS to config.hideMoments,
+            "其他杂项隐藏" to FriendToggle.HIDE_OTHER_MISC to config.hideOtherMisc
+        )
+
+        val switches = mutableListOf<Switch>()
+
+        toggles.forEach { (labelPair, toggle, value) ->
+            val row = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                setPadding(0, 12, 0, 12)
+            }
+
+            val textView = TextView(this).apply {
+                text = labelPair
+                textSize = 14f
+                layoutParams = android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+                )
+            }
+
+            val switch = Switch(this).apply {
+                isChecked = value
+                tag = toggle
+            }
+
+            row.addView(textView)
+            row.addView(switch)
+            layout.addView(row)
+
+            switches.add(switch)
+        }
+
+        scrollView.addView(layout)
+
+        AlertDialog.Builder(this)
+            .setTitle("好友配置")
+            .setView(scrollView)
+            .setPositiveButton("保存") { _, _ ->
+                // 读取伪装目标ID
+                disguiseTargetId = disguiseEditText.text.toString().trim()
+                switches.forEach { switch ->
+                    val toggle = switch.tag as FriendToggle
+                    val isChecked = switch.isChecked
+                    ConfigManager.updateFriendToggle(this, wxId, toggle, isChecked)
+                }
+                // 保存伪装目标ID
+                if (disguiseTargetId != null) {
+                    val cfg = ConfigManager.getFriendConfig(this, wxId) ?: FriendConfig.createDefault(wxId, label)
+                    ConfigManager.setFriendConfig(this, cfg.copy(disguiseTargetId = disguiseTargetId))
+                }
+                updateHiddenList()
+                Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("重置为默认") { _, _ ->
+                val defaultConfig = FriendConfig.createDefault(wxId, label)
+                ConfigManager.setFriendConfig(this, defaultConfig)
+                updateHiddenList()
+                Toast.makeText(this, "已重置为默认配置", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
-    private fun showRestoreBackupDialog() {
-        val backups = BackupManager.listBackups(this)
-        if (backups.isEmpty()) {
-            Toast.makeText(this, R.string.no_backups, Toast.LENGTH_SHORT).show()
+    // ========================================================================
+    // 导入/导出
+    // ========================================================================
+
+    private fun exportConfig() {
+        val json = ConfigManager.exportToJson(this)
+        val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Mirage Backup", json))
+        Toast.makeText(this, "配置已导出到剪贴板", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun importConfig() {
+        val clipboard = getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = clipboard.primaryClip
+        val json = clip?.getItemAt(0)?.text?.toString() ?: ""
+
+        val editText = EditText(this).apply {
+            setText(json)
+            minLines = 5
+            hint = "粘贴要导入的 JSON 数据"
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("导入配置")
+            .setView(editText)
+            .setPositiveButton("导入") { _, _ ->
+                val inputJson = editText.text.toString().trim()
+                if (inputJson.isEmpty()) {
+                    Toast.makeText(this, "请输入 JSON 数据", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val count = ConfigManager.importFromJson(this, inputJson)
+                if (count >= 0) {
+                    updateHiddenList()
+                    Toast.makeText(this, "成功导入 $count 个好友", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "导入失败：JSON 格式不正确", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showClearAllDialog() {
+        val count = ConfigManager.getHiddenWxIds(this).size
+        if (count == 0) {
+            Toast.makeText(this, "没有可清除的隐藏好友", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val backupNames = backups.map { it.name }
         AlertDialog.Builder(this)
-            .setTitle(R.string.select_backup_to_restore)
-            .setItems(backupNames.toTypedArray()) { _, which ->
-                confirmRestore(backups[which])
+            .setTitle("清空全部")
+            .setMessage("确定要移除所有 $count 个隐藏好友吗？\n此操作不可撤销！")
+            .setPositiveButton("确认清空") { _, _ ->
+                ConfigManager.clear(this)
+                updateHiddenList()
+                Toast.makeText(this, "已清空全部隐藏好友", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton(R.string.cancel, null)
+            .setNegativeButton("取消", null)
             .show()
-    }
-
-    private fun confirmRestore(backup: BackupManager.BackupInfo) {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.confirm_restore)
-            .setMessage(getString(R.string.restore_confirm_message, backup.name))
-            .setPositiveButton(R.string.restore) { _, _ ->
-                val result = BackupManager.restoreBackup(this, backup.name)
-                if (result.isSuccess) {
-                    updateHiddenList()
-                    Toast.makeText(this, R.string.backup_restored, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, R.string.restore_failed, Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
-    }
-
-    private fun validateConfig() {
-        val isValid = ConfigValidator.validate()
-        if (isValid) {
-            Toast.makeText(this, R.string.config_valid, Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Config validation failed", Toast.LENGTH_SHORT).show()
-        }
     }
 }

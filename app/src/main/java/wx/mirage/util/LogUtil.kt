@@ -8,49 +8,77 @@ import wx.mirage.Constants
  *
  * 封装 XposedBridge.log，提供统一的 TAG 格式和日志级别过滤。
  * 所有日志输出格式: "Mirage: [TAG] message"
- *
- * 使用示例:
- *   LogUtil.i("ContactHook", "Initializing...")
- *   LogUtil.e("MainHook", "Failed to initialize", exception)
  */
 object LogUtil {
 
-    /** 全局 TAG，统一此前缀，引用自 [Constants.MODULE_TAG] */
     const val GLOBAL_TAG = Constants.MODULE_TAG
 
-    /**
-     * 格式化日志消息为统一格式
-     */
+    const val LEVEL_DEBUG = 0
+    const val LEVEL_INFO = 1
+    const val LEVEL_WARN = 2
+    const val LEVEL_ERROR = 3
+
+    @Volatile private var currentLevel: Int = LEVEL_DEBUG
+    @Volatile private var debugMode: Boolean = false
+    private val logBuffer = mutableListOf<String>()
+    private const val MAX_BUFFER_SIZE = 500
+
     private fun format(tag: String, message: String): String {
         return "$GLOBAL_TAG: [$tag] $message"
     }
 
-    /**
-     * Debug 级别日志 - 用于详细的调试信息
-     */
+    private fun shouldLog(level: Int): Boolean = level >= currentLevel
+
+    fun setDebugMode(enabled: Boolean) { debugMode = enabled }
+    fun setLogLevel(level: Int) { currentLevel = level.coerceIn(LEVEL_DEBUG, LEVEL_ERROR) }
+    fun isDebugMode(): Boolean = debugMode
+
     fun d(tag: String, message: String) {
-        XposedBridge.log("[DEBUG] ${format(tag, message)}")
+        if (!shouldLog(LEVEL_DEBUG)) return
+        val msg = "[DEBUG] ${format(tag, message)}"
+        XposedBridge.log(msg)
+        addToBuffer(msg)
     }
 
-    /**
-     * Info 级别日志 - 用于常规信息输出
-     */
     fun i(tag: String, message: String) {
-        XposedBridge.log("[INFO] ${format(tag, message)}")
+        if (!shouldLog(LEVEL_INFO)) return
+        val msg = "[INFO] ${format(tag, message)}"
+        XposedBridge.log(msg)
+        addToBuffer(msg)
     }
 
-    /**
-     * Warning 级别日志 - 用于警告信息
-     */
     fun w(tag: String, message: String) {
-        XposedBridge.log("[WARN] ${format(tag, message)}")
+        if (!shouldLog(LEVEL_WARN)) return
+        val msg = "[WARN] ${format(tag, message)}"
+        XposedBridge.log(msg)
+        addToBuffer(msg)
     }
 
-    /**
-     * Error 级别日志 - 用于错误信息，可附带异常堆栈
-     */
     fun e(tag: String, message: String, throwable: Throwable? = null) {
-        XposedBridge.log("[ERROR] ${format(tag, message)}")
+        if (!shouldLog(LEVEL_ERROR)) return
+        val msg = "[ERROR] ${format(tag, message)}"
+        XposedBridge.log(msg)
+        addToBuffer(msg)
         throwable?.let { XposedBridge.log(it) }
+    }
+
+    private fun addToBuffer(msg: String) {
+        synchronized(logBuffer) {
+            if (logBuffer.size >= MAX_BUFFER_SIZE) {
+                logBuffer.removeAt(0)
+            }
+            logBuffer.add(msg)
+        }
+    }
+
+    fun getRecentLogs(count: Int): List<String> {
+        synchronized(logBuffer) {
+            val start = (logBuffer.size - count).coerceAtLeast(0)
+            return logBuffer.subList(start, logBuffer.size).toList()
+        }
+    }
+
+    fun clearLogs() {
+        synchronized(logBuffer) { logBuffer.clear() }
     }
 }

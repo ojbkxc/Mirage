@@ -6,26 +6,25 @@ import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import wx.mirage.Constants
 import wx.mirage.MainHook
-import wx.mirage.config.ConfigManager
 import wx.mirage.config.HookStatus
 import wx.mirage.lifecycle.HookLifecycleListener
 import wx.mirage.util.HookMetrics
 import wx.mirage.util.LogUtil
 
 /**
- * 群成员 Hook 模块
+ * 朋友圈广告移除 Hook 模块
  *
- * 功能：拦截群成员列表加载，隐藏被标记好友从群成员视图中移除。
- * 使用 ConfigManager.getHiddenWxIds 进行全面的过滤。
+ * 功能：拦截朋友圈时间线加载，移除广告条目。
+ * 通过检查广告标识字段来识别并移除广告内容。
  *
- * 修复要点：
- * - Hook onResume 确保数据已加载
- * - 递归查找 ListView 和 adapter
- * - 遍历所有字段查找 wxId
+ * 实现方式：
+ * - Hook 朋友圈 Adapter 的 getView 方法
+ * - 检查每个条目的广告标识
+ * - 移除广告相关条目
  */
-object GroupMemberHook : HookLifecycleListener {
+object MomentsAdRemovalHook : HookLifecycleListener {
 
-    private const val TAG = Constants.MODULE_TAG + ":GroupMemberHook"
+    private const val TAG = Constants.MODULE_TAG + ":MomentsAdRemovalHook"
 
     @Volatile
     var status: HookStatus = HookStatus.INACTIVE
@@ -65,28 +64,25 @@ object GroupMemberHook : HookLifecycleListener {
     private fun initWithDexKit(lpparam: XC_LoadPackage.LoadPackageParam) {
         val classLoader = lpparam.classLoader
 
-        val groupMemberClass = MainHook.dexKitBridge.findClass {
-            searchString = "group"
-            searchPackage = Constants.WECHAT_CHATTING_COMPONENT
+        val snsClass = MainHook.dexKitBridge.findClass {
+            searchString = "sns"
+            searchPackage = Constants.WECHAT_PLUGIN_SNS
         }
 
-        if (groupMemberClass != null) {
-            targetClass = classLoader.loadClass(groupMemberClass.name)
+        if (snsClass != null) {
+            targetClass = classLoader.loadClass(snsClass.name)
             targetMethodName = "onResume"
             cacheWarmedUp = true
-            LogUtil.i(TAG, "DexKit found: ${groupMemberClass.name}")
+            LogUtil.i(TAG, "DexKit found: ${snsClass.name}")
         }
     }
 
     private fun initFallback(classLoader: ClassLoader) {
         val candidates = listOf(
-            "${Constants.WECHAT_CHATTING_COMPONENT}.ChattingUIFragment",
-            "com.tencent.mm.ui.chatting.ChattingUI",
-            "com.tencent.mm.ui.chatting.gallery.ImageGalleryUI",
-            "com.tencent.mm.ui.chatting.ChatFooter",
-            "com.tencent.mm.chatroom.ui.ChatRoomInfoUI",
-            "com.tencent.mm.chatroom.ui.SeeRoomMemberUI",
-            "com.tencent.mm.ui.contact.SelectContactUI"
+            "${Constants.WECHAT_PLUGIN_SNS}.ui.SnsTimeLineUI",
+            "${Constants.WECHAT_PLUGIN_SNS}.ui.SnsTimeLineFragment",
+            "${Constants.WECHAT_PLUGIN_SNS}.adapter.SnsTimeLineAdapter",
+            "com.tencent.mm.plugin.sns.ui.SnsActivity"
         )
 
         for (className in candidates) {
@@ -101,13 +97,13 @@ object GroupMemberHook : HookLifecycleListener {
     }
 
     override fun onHookRegistered() {
-        LogUtil.i(TAG, "GroupMemberHook registered (status: ${status.description})")
+        LogUtil.i(TAG, "MomentsAdRemovalHook registered (status: ${status.description})")
         targetClass?.let { clazz ->
             targetMethodName?.let { method ->
                 try {
                     XposedHelpers.findAndHookMethod(clazz, method, object : XC_MethodHook() {
                         override fun afterHookedMethod(param: MethodHookParam) {
-                            performFiltering(param)
+                            removeAds(param)
                         }
                     })
                     LogUtil.i(TAG, "Hooked $method on ${clazz.name}")
@@ -123,7 +119,7 @@ object GroupMemberHook : HookLifecycleListener {
         try {
             XposedHelpers.findAndHookMethod(clazz, "onResume", object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
-                    performFiltering(param)
+                    removeAds(param)
                 }
             })
             return
@@ -131,7 +127,7 @@ object GroupMemberHook : HookLifecycleListener {
         try {
             XposedHelpers.findAndHookMethod(clazz, "onStart", object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
-                    performFiltering(param)
+                    removeAds(param)
                 }
             })
             return
@@ -140,7 +136,7 @@ object GroupMemberHook : HookLifecycleListener {
     }
 
     override fun onHookFailed(error: Throwable) {
-        LogUtil.e(TAG, "GroupMemberHook failed: ${error.message}", error)
+        LogUtil.e(TAG, "MomentsAdRemovalHook failed: ${error.message}", error)
         status = HookStatus.ERROR
     }
 
@@ -153,7 +149,7 @@ object GroupMemberHook : HookLifecycleListener {
             }
         } catch (_: Throwable) {}
         status = HookStatus.INACTIVE
-        LogUtil.i(TAG, "GroupMemberHook unregistered")
+        LogUtil.i(TAG, "MomentsAdRemovalHook unregistered")
     }
 
     @JvmStatic
@@ -165,57 +161,83 @@ object GroupMemberHook : HookLifecycleListener {
     }
 
     // ========================================================================
-    // 核心过滤逻辑
+    // 广告移除逻辑
     // ========================================================================
 
-    private fun performFiltering(param: XC_MethodHook.MethodHookParam) {
+    private fun removeAds(param: XC_MethodHook.MethodHookParam) {
         try {
-            val context = MainHook.appContext ?: return
-            val hiddenIds = ConfigManager.getHiddenWxIds(context)
-            if (hiddenIds.isEmpty()) return
-
             HookMetrics.recordHookExecution(TAG)
-            LogUtil.d(TAG, "Filtering group members, hidden count: ${hiddenIds.size}")
 
-            filterGroupMemberList(param.thisObject, hiddenIds)
+            val activity = param.thisObject
+
+            // 查找 ListView/RecyclerView
+            val listView = findListView(activity) ?: return
+            val adapter = findAdapter(listView) ?: return
+
+            // 查找 adapter 数据列表
+            val dataList = findMutableListField(adapter) ?: return
+
+            var removedCount = 0
+            val iterator = dataList.iterator()
+            while (iterator.hasNext()) {
+                val item = iterator.next() ?: continue
+                if (isAdItem(item)) {
+                    iterator.remove()
+                    removedCount++
+                    LogUtil.d(TAG, "Removed an ad from moments")
+                }
+            }
+
+            if (removedCount > 0) {
+                LogUtil.i(TAG, "Removed $removedCount ads from moments")
+                tryCallMethod(adapter, "notifyDataSetChanged")
+            }
         } catch (e: Throwable) {
-            LogUtil.e(TAG, "Error in performFiltering: ${e.message}", e)
+            LogUtil.e(TAG, "Error removing ads: ${e.message}", e)
         }
     }
 
-    private fun filterGroupMemberList(activity: Any, hiddenIds: Set<String>) {
-        val listView = findListView(activity) ?: run {
-            LogUtil.d(TAG, "No list view found in group member activity")
-            return
+    /**
+     * 检查朋友圈条目是否为广告。
+     */
+    private fun isAdItem(item: Any): Boolean {
+        // 0. 检查类型字段
+        val type = tryGetField(item,
+            "field_type", "type", "mType", "snsType",
+            "field_snsType", "msgType", "field_msgType",
+            "a", "b", "c", "d", "e", "f", "g", "h"
+        )
+        if (type is Int) {
+            // 微信朋友圈广告类型通常为特定值
+            if (type == 15 || type == 16 || type == 17 || type == 20) return true
         }
 
-        val adapter = findAdapter(listView) ?: run {
-            LogUtil.d(TAG, "No adapter found in group member list")
-            return
+        // 1. 检查广告标识字段
+        val adFields = arrayOf(
+            "field_isAdvertisement", "isAdvertisement",
+            "mIsAd", "isAd", "field_isAd",
+            "adInfo", "field_adInfo", "mAdInfo",
+            "field_advertisement", "advertisement",
+            "adType", "field_adType", "mAdType",
+            "field_adXml", "adXml", "mAdXml"
+        )
+        for (fieldName in adFields) {
+            try {
+                val value = XposedHelpers.getObjectField(item, fieldName)
+                if (value != null) return true
+            } catch (_: Throwable) {}
         }
 
-        val dataList = findMutableListField(adapter) ?: run {
-            LogUtil.d(TAG, "Group member list not found")
-            return
-        }
-
-        var removedCount = 0
-
-        val iterator = dataList.iterator()
-        while (iterator.hasNext()) {
-            val item = iterator.next() ?: continue
-            val wxId = extractWxId(item)
-            if (wxId != null && wxId in hiddenIds) {
-                iterator.remove()
-                removedCount++
-                LogUtil.d(TAG, "Removed hidden group member: $wxId")
+        // 2. 检查内容字段是否包含广告相关字符串
+        try {
+            val content = tryGetField(item, "field_content", "content", "mContent", "field_desc", "desc")
+            if (content is String && (content.contains("广告") || content.contains("推广") ||
+                    content.contains("ad") || content.contains("sponsored"))) {
+                return true
             }
-        }
+        } catch (_: Throwable) {}
 
-        if (removedCount > 0) {
-            LogUtil.i(TAG, "Removed $removedCount hidden members from group")
-            tryCallMethod(adapter, "notifyDataSetChanged")
-        }
+        return false
     }
 
     // ========================================================================
@@ -224,11 +246,9 @@ object GroupMemberHook : HookLifecycleListener {
 
     private fun findListView(activity: Any): Any? {
         val listView = tryGetField(activity,
-            "mMemberListView", "memberListView",
             "mListView", "listView", "mRecyclerView", "recyclerView",
-            "mMemberRecyclerView", "mGroupMemberListView",
-            "mContactListView", "mChatRoomMemberListView",
-            "mSwipeRefreshLayout", "mRefreshLayout"
+            "mSnsListView", "snsListView", "mSnsRecyclerView",
+            "mTimelineListView", "mSwipeRefreshLayout", "mRefreshLayout"
         )
         if (listView != null) return listView
         return findListViewRecursive(activity, 0, 3)
@@ -282,85 +302,6 @@ object GroupMemberHook : HookLifecycleListener {
             }
         } catch (_: Throwable) {}
         return null
-    }
-
-    // ========================================================================
-    // wxId 提取
-    // ========================================================================
-
-    private fun extractWxId(obj: Any): String? {
-        val fieldNames = arrayOf(
-            "field_username", "username", "wxId",
-            "mUserName", "mWxId", "userName",
-            "field_talker", "talker", "mTalker",
-            "field_memberName", "memberName", "mMemberName",
-            "field_contactUsername", "contactUsername",
-            "mContactUsername", "mFieldUsername",
-            "field_wxId", "field_chatroomMember",
-            "a", "b", "c", "d", "e", "f", "g", "h",
-            "i", "j", "k", "l", "m", "n", "o", "p",
-            "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-            "wxid", "mWxid", "field_wxid",
-            "encodeUserName", "mEncodeUserName",
-            "field_encodeUserName"
-        )
-
-        for (fieldName in fieldNames) {
-            val value = tryGetField(obj, fieldName)
-            if (value is String && value.isNotEmpty() && isValidWxId(value)) {
-                return value
-            }
-        }
-
-        val methodNames = arrayOf(
-            "getUsername", "getWxId", "getMemberName",
-            "getFieldUsername", "getUserName", "getContactUsername",
-            "getEncodeUserName", "getTalker"
-        )
-        for (methodName in methodNames) {
-            val value = tryCallMethod(obj, methodName)
-            if (value is String && value.isNotEmpty() && isValidWxId(value)) {
-                return value
-            }
-        }
-
-        val nestedFields = arrayOf(
-            "field_contact", "contact", "mContact",
-            "field_userInfo", "userInfo", "mUserInfo",
-            "field_user", "user", "mUser",
-            "field_member", "member", "mMember"
-        )
-        for (fieldName in nestedFields) {
-            val nested = tryGetField(obj, fieldName)
-            if (nested != null && nested !== obj) {
-                val wxId = extractWxId(nested)
-                if (wxId != null) return wxId
-            }
-        }
-
-        return findWxIdInAllFields(obj)
-    }
-
-    private fun findWxIdInAllFields(obj: Any): String? {
-        try {
-            for (field in obj.javaClass.declaredFields) {
-                field.isAccessible = true
-                try {
-                    val value = field.get(obj)
-                    if (value is String && value.isNotEmpty() && isValidWxId(value)) {
-                        return value
-                    }
-                } catch (_: Throwable) {}
-            }
-        } catch (_: Throwable) {}
-        return null
-    }
-
-    private fun isValidWxId(value: String): Boolean {
-        return value.startsWith("wxid_") ||
-               value.startsWith("gh_") ||
-               (value.length in 6..64 && value.matches(Regex("^[a-zA-Z0-9_\\-@]+$")) &&
-                !value.contains(".") && !value.contains("/"))
     }
 
     // ========================================================================

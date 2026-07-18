@@ -59,6 +59,10 @@
                 <action android:name="wx.mirage.action.RELOAD_CONFIG" />
                 <action android:name="wx.mirage.action.CLEAR_DEXKIT_CACHE" />
                 <action android:name="wx.mirage.action.FORCE_RELOAD_HOOKS" />
+                <action android:name="wx.mirage.action.TEMP_UNHIDE" />
+                <action android:name="wx.mirage.action.RESTORE_HIDE" />
+                <action android:name="wx.mirage.action.BACKGROUND_RESTORE" />
+                <action android:name="wx.mirage.action.CONFIG_CHANGED" />
             </intent-filter>
         </receiver>
 

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import wx.mirage.Constants
 import wx.mirage.MainHook
+import wx.mirage.manager.TempUnhideManager
 import wx.mirage.util.LogUtil
 
 /**
@@ -46,6 +47,10 @@ object ConfigReceiver : BroadcastReceiver() {
             addAction(Constants.ACTION_RELOAD_CONFIG)
             addAction(Constants.ACTION_CLEAR_DEXKIT_CACHE)
             addAction(Constants.ACTION_FORCE_RELOAD_HOOKS)
+            addAction(Constants.ACTION_TEMP_UNHIDE)
+            addAction(Constants.ACTION_RESTORE_HIDE)
+            addAction(Constants.ACTION_BACKGROUND_RESTORE)
+            addAction(Constants.ACTION_CONFIG_CHANGED)
         }
 
         context.registerReceiver(this, filter, Constants.PERMISSION_CONTROL, null)
@@ -84,6 +89,18 @@ object ConfigReceiver : BroadcastReceiver() {
             }
             Constants.ACTION_FORCE_RELOAD_HOOKS -> {
                 handleForceReloadHooks()
+            }
+            Constants.ACTION_TEMP_UNHIDE -> {
+                handleTempUnhide(intent)
+            }
+            Constants.ACTION_RESTORE_HIDE -> {
+                handleRestoreHide(intent)
+            }
+            Constants.ACTION_BACKGROUND_RESTORE -> {
+                handleBackgroundRestore()
+            }
+            Constants.ACTION_CONFIG_CHANGED -> {
+                handleConfigChanged()
             }
             else -> {
                 LogUtil.w(Constants.MODULE_TAG, "ConfigReceiver: unknown action $action")
@@ -130,6 +147,61 @@ object ConfigReceiver : BroadcastReceiver() {
             LogUtil.i(Constants.MODULE_TAG, "Hooks force reloaded")
         } catch (e: Throwable) {
             LogUtil.e(Constants.MODULE_TAG, "Failed to force reload hooks: ${e.message}", e)
+        }
+    }
+
+    /**
+     * 临时取消隐藏
+     */
+    private fun handleTempUnhide(intent: Intent) {
+        try {
+            val wxId = intent.getStringExtra("wxId") ?: return
+            TempUnhideManager.tempUnhide(wxId)
+            LogUtil.i(Constants.MODULE_TAG, "Temp unhide: $wxId")
+        } catch (e: Throwable) {
+            LogUtil.e(Constants.MODULE_TAG, "Failed to temp unhide: ${e.message}", e)
+        }
+    }
+
+    /**
+     * 恢复隐藏
+     */
+    private fun handleRestoreHide(intent: Intent) {
+        try {
+            val wxId = intent.getStringExtra("wxId")
+            if (wxId != null) {
+                TempUnhideManager.restoreForFriend(wxId)
+                LogUtil.i(Constants.MODULE_TAG, "Restore hide: $wxId")
+            } else {
+                TempUnhideManager.restoreAll()
+                LogUtil.i(Constants.MODULE_TAG, "Restore all hide")
+            }
+        } catch (e: Throwable) {
+            LogUtil.e(Constants.MODULE_TAG, "Failed to restore hide: ${e.message}", e)
+        }
+    }
+
+    /**
+     * 后台自动恢复
+     */
+    private fun handleBackgroundRestore() {
+        try {
+            TempUnhideManager.restoreOnAppBackground()
+            LogUtil.i(Constants.MODULE_TAG, "Background restore scheduled")
+        } catch (e: Throwable) {
+            LogUtil.e(Constants.MODULE_TAG, "Failed to schedule background restore: ${e.message}", e)
+        }
+    }
+
+    /**
+     * 配置变更
+     */
+    private fun handleConfigChanged() {
+        try {
+            ConfigManager.reloadConfig()
+            LogUtil.i(Constants.MODULE_TAG, "Config changed, cache reloaded")
+        } catch (e: Throwable) {
+            LogUtil.e(Constants.MODULE_TAG, "Failed to handle config change: ${e.message}", e)
         }
     }
 }

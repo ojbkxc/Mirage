@@ -225,6 +225,17 @@ object BackupManager {
      *         size（文件大小字节）、lastModified（最后修改时间戳）
      */
     fun listBackups(): List<BackupInfo> {
+        return listBackupsInternal()
+    }
+
+    /**
+     * 列出所有可用备份文件（带 Context 的便捷方法）。
+     */
+    fun listBackups(context: Context?): List<BackupInfo> {
+        return listBackupsInternal()
+    }
+
+    private fun listBackupsInternal(): List<BackupInfo> {
         return try {
             val backupDir = getBackupDir()
             if (!backupDir.exists() || !backupDir.isDirectory) {
@@ -299,6 +310,28 @@ object BackupManager {
         } catch (e: Exception) {
             LogUtil.e(MODULE_TAG, "Failed to delete old backups: ${e.message}", e)
             0
+        }
+    }
+
+    /**
+     * 删除指定的备份文件。
+     */
+    fun deleteBackup(context: Context?, path: String): Boolean {
+        return try {
+            val backupDir = getBackupDir()
+            if (!SecurityUtils.isValidPath(path, backupDir)) {
+                LogUtil.w(MODULE_TAG, "Path traversal attempt blocked: $path")
+                return false
+            }
+            val file = File(path)
+            if (file.exists()) {
+                file.delete()
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            LogUtil.e(MODULE_TAG, "Failed to delete backup: ${e.message}", e)
+            false
         }
     }
 

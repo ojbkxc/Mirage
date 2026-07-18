@@ -23,6 +23,32 @@
         android:layout_height="@dimen/divider_height"
         android:background="#E0E0E0" />
 
+    <!-- ===== 添加好友区域 ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/section_spacing"
+        android:paddingBottom="4dp">
+
+        <EditText
+            android:id="@+id/editWxId"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/hint_input_wxid"
+            android:minHeight="48dp"
+            android:singleLine="true"
+            android:paddingHorizontal="12dp" />
+
+    </LinearLayout>
+
+    <!-- ===== 分隔线 ===== -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:background="#E0E0E0" />
+
     <!-- ===== 列表标题 ===== -->
     <TextView
         android:id="@+id/tvListHeader"

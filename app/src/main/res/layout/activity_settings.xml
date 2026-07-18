@@ -124,6 +124,24 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="@dimen/divider_height"
+        android:background="#E0E0E0" />
+
+    <!-- ===== 模块设置 ===== -->
+    <Button
+        android:id="@+id/moduleSettingsBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/button_min_height"
+        android:text="模块设置"
+        android:textAllCaps="false"
+        android:layout_marginTop="8dp"
+        android:paddingTop="@dimen/button_padding_vertical"
+        android:paddingBottom="@dimen/button_padding_vertical" />
+
+    <!-- ===== 分隔线 ===== -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
         android:background="#E0E0E0"
         android:layout_marginTop="@dimen/section_spacing" />
 

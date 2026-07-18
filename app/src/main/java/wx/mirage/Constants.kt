@@ -90,4 +90,44 @@ object Constants {
 
     /** 自定义权限名称 */
     const val PERMISSION_CONTROL = "wx.mirage.permission.CONTROL"
+
+    // ========== 新增广播 Action ==========
+
+    /** 临时取消隐藏广播 */
+    const val ACTION_TEMP_UNHIDE = "wx.mirage.action.TEMP_UNHIDE"
+
+    /** 恢复隐藏广播 */
+    const val ACTION_RESTORE_HIDE = "wx.mirage.action.RESTORE_HIDE"
+
+    /** 后台自动恢复广播 */
+    const val ACTION_BACKGROUND_RESTORE = "wx.mirage.action.BACKGROUND_RESTORE"
+
+    /** 配置变更通知广播 */
+    const val ACTION_CONFIG_CHANGED = "wx.mirage.action.CONFIG_CHANGED"
+
+    // ========== 默认指令 ==========
+
+    /** 默认命令前缀 */
+    const val DEFAULT_COMMAND_PREFIX = "#veil"
+
+    /** 默认显示命令 */
+    const val DEFAULT_SHOW_COMMAND = "#show"
+
+    /** 默认保持命令 */
+    const val DEFAULT_KEEP_COMMAND = "#keep"
+
+    /** 默认列表命令 */
+    const val DEFAULT_LIST_COMMAND = "#list"
+
+    /** 默认 wxid 命令 */
+    const val DEFAULT_WXID_COMMAND = "#wxid"
+
+    /** 默认长按时长（毫秒） */
+    const val DEFAULT_LONG_PRESS_DURATION = 5000
+
+    /** 默认空白处长按时长（毫秒） */
+    const val DEFAULT_LONG_PRESS_BLANK_DURATION = 10000
+
+    /** 临时取消隐藏时长（毫秒） */
+    const val TEMP_UNHIDE_DURATION_MS = 2 * 60 * 1000L
 }
