@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">#1976D2</item>
-        <item name="colorPrimaryDark">#1565C0</item>
-        <item name="colorAccent">#FF4081</item>
-    </style>
+    <!-- 自定义样式放在这里，AppTheme 定义在 themes.xml 中 -->
 </resources>
