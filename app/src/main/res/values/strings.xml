@@ -74,8 +74,8 @@
 
     <!-- ===== 统计信息运行时间格式 ===== -->
     <string name="stats_uptime_m">%d 分钟</string>
-    <string name="stats_uptime_hm">%d 小时 %d 分钟</string>
-    <string name="stats_uptime_dhm">%d 天 %d 小时 %d 分钟</string>
+    <string name="stats_uptime_hm">%1$d 小时 %2$d 分钟</string>
+    <string name="stats_uptime_dhm">%1$d 天 %2$d 小时 %3$d 分钟</string>
 
     <!-- ===== 设置页面 ===== -->
     <string name="settings_title">设置</string>
@@ -124,7 +124,7 @@
     <string name="backup_delete_old_title">删除旧备份</string>
     <string name="backup_delete_old_msg">当前共有 %d 个备份文件。\n\n请输入要保留的备份数量：</string>
     <string name="backup_keep_count_hint">保留数量（默认 5）</string>
-    <string name="backup_delete_old_result">已删除 %d 个旧备份，保留 %d 个</string>
+    <string name="backup_delete_old_result">已删除 %1$d 个旧备份，保留 %2$d 个</string>
 
     <!-- ===== 设置页面 - 备份管理 ===== -->
     <string name="settings_backup_section">备份管理</string>

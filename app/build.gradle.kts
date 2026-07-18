@@ -6,6 +6,10 @@ plugins {
 android {
     namespace = "wx.mirage"
     compileSdk = 34
+
+    buildFeatures {
+        buildConfig = false
+    }
     
     defaultConfig {
         applicationId = "wx.mirage"
@@ -39,8 +43,8 @@ android {
 }
 
 dependencies {
-    // Xposed API (版本与 manifest xposed_minversion 对齐)
-    compileOnly("de.robv.android.xposed:api:93")
+    // Xposed API (compileOnly, 运行时由 Xposed 框架提供)
+    compileOnly("de.robv.android.xposed:api:82")
     
     // DexKit - 动态查找微信混淆类
     implementation("org.luckypray:dexkit:2.0.1")
