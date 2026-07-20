@@ -1,6 +1,7 @@
 package wx.mirage.ui
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
@@ -197,26 +198,26 @@ class MainActivity : AppCompatActivity() {
 
         // 创建开关列表
         val toggles = listOf(
-            "总开关" to FriendToggle.MASTER_SWITCH to config.masterSwitch,
-            "拦截语音视频通话" to FriendToggle.BLOCK_VOICE_CALL to config.blockVoiceCall,
-            "拦截消息通知" to FriendToggle.BLOCK_NOTIFICATION to config.blockNotification,
-            "主页好友列表伪装" to FriendToggle.DISGUISE_MAIN_PAGE to config.disguiseMainPage,
-            "聊天记录隐藏" to FriendToggle.HIDE_CHAT_HISTORY to config.hideChatHistory,
-            "联系人隐藏" to FriendToggle.HIDE_CONTACT to config.hideContact,
-            "朋友圈隐藏" to FriendToggle.HIDE_MOMENTS to config.hideMoments,
-            "其他杂项隐藏" to FriendToggle.HIDE_OTHER_MISC to config.hideOtherMisc
+            Triple("总开关", FriendToggle.MASTER_SWITCH, config.masterSwitch),
+            Triple("拦截语音视频通话", FriendToggle.BLOCK_VOICE_CALL, config.blockVoiceCall),
+            Triple("拦截消息通知", FriendToggle.BLOCK_NOTIFICATION, config.blockNotification),
+            Triple("主页好友列表伪装", FriendToggle.DISGUISE_MAIN_PAGE, config.disguiseMainPage),
+            Triple("聊天记录隐藏", FriendToggle.HIDE_CHAT_HISTORY, config.hideChatHistory),
+            Triple("联系人隐藏", FriendToggle.HIDE_CONTACT, config.hideContact),
+            Triple("朋友圈隐藏", FriendToggle.HIDE_MOMENTS, config.hideMoments),
+            Triple("其他杂项隐藏", FriendToggle.HIDE_OTHER_MISC, config.hideOtherMisc)
         )
 
         val switches = mutableListOf<Switch>()
 
-        toggles.forEach { (labelPair, toggle, value) ->
+        toggles.forEach { (label, toggle, value) ->
             val row = android.widget.LinearLayout(this).apply {
                 orientation = android.widget.LinearLayout.HORIZONTAL
                 setPadding(0, 12, 0, 12)
             }
 
             val textView = TextView(this).apply {
-                text = labelPair
+                text = label
                 textSize = 14f
                 layoutParams = android.widget.LinearLayout.LayoutParams(
                     0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f

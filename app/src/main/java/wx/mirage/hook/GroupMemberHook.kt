@@ -41,7 +41,7 @@ object GroupMemberHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -174,7 +174,7 @@ object GroupMemberHook : HookLifecycleListener {
             val hiddenIds = ConfigManager.getHiddenWxIds(context)
             if (hiddenIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
             LogUtil.d(TAG, "Filtering group members, hidden count: ${hiddenIds.size}")
 
             filterGroupMemberList(param.thisObject, hiddenIds)

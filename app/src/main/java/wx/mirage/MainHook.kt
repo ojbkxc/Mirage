@@ -94,7 +94,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         @JvmStatic
         @Volatile
         lateinit var lpparam: XC_LoadPackage.LoadPackageParam
-            private set
 
         /**
          * 所有 Hook 是否已注册。
@@ -106,7 +105,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         @JvmStatic
         @Volatile
         var hooksRegistered: Boolean = false
-            private set
 
         /**
          * 模块是否已关闭。
@@ -118,7 +116,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         @JvmStatic
         @Volatile
         var isShutdown: Boolean = false
-            private set
 
         /**
          * 模块启动时间戳（毫秒），用于计算 uptime。
@@ -189,7 +186,7 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
 
         LogUtil.i(Constants.MODULE_TAG, "========== Injecting into WeChat main process ==========")
-        this.lpparam = lpparam
+        MainHook.lpparam = lpparam
         startupTimestamp = System.currentTimeMillis()
 
         // 版本兼容性检查
@@ -245,7 +242,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * 关闭 DexKit 桥接，释放资源
      * 在模块卸载或微信进程退出前调用
      */
-    @JvmStatic
     fun shutdownDexKit() {
         if (dexKitClosed) {
             LogUtil.d(Constants.MODULE_TAG, "DexKit already closed, skipping")
@@ -284,7 +280,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * 每个步骤独立 try-catch，防止单个步骤失败导致整体 shutdown 不完整。
      * 此方法可安全地多次调用，后续调用会被忽略（isShutdown 检查）。
      */
-    @JvmStatic
     fun shutdown() {
         if (isShutdown) {
             LogUtil.d(Constants.MODULE_TAG, "Module already shut down, skipping")
@@ -327,7 +322,7 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
     /**
      * 清除所有 Hook 模块中的 DexKit 缓存
      */
-    private fun clearAllDexKitCaches() {
+    internal fun clearAllDexKitCaches() {
         try {
             ChatInputHook.clearDexKitCache()
             ContactHook.clearDexKitCache()
@@ -404,7 +399,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param hookAction 注册 Hook 的具体操作（接收 Class 对象作为参数）
      * @return 是否成功注册 Hook
      */
-    @JvmStatic
     fun registerHookWithRetry(
         className: String,
         classLoader: ClassLoader,
@@ -461,7 +455,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param hookAction 注册 Hook 的具体操作
      * @return 是否成功注册 Hook
      */
-    @JvmStatic
     fun registerHookWithRetry(
         className: String,
         classLoader: ClassLoader,
@@ -617,7 +610,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param lpparam Xposed LoadPackage 参数
      * @return true 如果至少有一个 Hook 模块注册成功，false 如果全部失败
      */
-    @JvmStatic
     fun registerAllHooks(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
         if (hooksRegistered) {
             LogUtil.i(Constants.MODULE_TAG, "Hooks already registered, skipping")
@@ -726,14 +718,22 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
      *
      * @param lpparam Xposed LoadPackage 参数，用于获取微信版本信息
      */
-    @JvmStatic
     fun checkVersionCompatibility(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
-            val appInfo = lpparam.appInfo
-            val versionName = appInfo?.versionName ?: "unknown"
-            val versionCode = appInfo?.versionCode ?: 0
+            var versionName = "unknown"
+            try {
+                // ApplicationInfo 没有 versionName/versionCode，需通过 PackageManager 获取
+                val atClass = Class.forName("android.app.ActivityThread")
+                val at = atClass.getMethod("currentActivityThread").invoke(null)
+                val context = atClass.getMethod("getSystemContext").invoke(at) as? Context
+                val pm = context?.packageManager
+                val pkgInfo = pm?.getPackageInfo(lpparam.packageName, 0)
+                versionName = pkgInfo?.versionName ?: "unknown"
+            } catch (_: Throwable) {
+                // 获取失败则使用 unknown
+            }
 
-            LogUtil.i(Constants.MODULE_TAG, "WeChat version: $versionName (code: $versionCode)")
+            LogUtil.i(Constants.MODULE_TAG, "WeChat version: $versionName")
 
             when {
                 // 已知不兼容

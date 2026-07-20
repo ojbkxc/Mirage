@@ -40,7 +40,7 @@ object MomentsAdRemovalHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -166,7 +166,7 @@ object MomentsAdRemovalHook : HookLifecycleListener {
 
     private fun removeAds(param: XC_MethodHook.MethodHookParam) {
         try {
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             val activity = param.thisObject
 

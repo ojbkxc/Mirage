@@ -36,7 +36,7 @@ object LongPressHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -164,7 +164,7 @@ object LongPressHook : HookLifecycleListener {
     private fun hookLongPressListener(param: XC_MethodHook.MethodHookParam) {
         try {
             val context = MainHook.appContext ?: return
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             val activity = param.thisObject
 

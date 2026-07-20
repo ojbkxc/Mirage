@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import wx.mirage.Constants
 import wx.mirage.MainHook
+import wx.mirage.config.ConfigManager
 import wx.mirage.manager.TempUnhideManager
 import wx.mirage.util.LogUtil
 
@@ -114,7 +115,7 @@ object ConfigReceiver : BroadcastReceiver() {
     private fun handleReloadConfig() {
         try {
             LogUtil.i(Constants.MODULE_TAG, "Reloading configuration...")
-            wx.mirage.config.ConfigManager.reloadConfig()
+            ConfigManager.reloadConfig()
             LogUtil.i(Constants.MODULE_TAG, "Configuration reloaded successfully")
         } catch (e: Throwable) {
             LogUtil.e(Constants.MODULE_TAG, "Failed to reload config: ${e.message}", e)

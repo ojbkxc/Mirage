@@ -44,7 +44,7 @@ object TempMomentsUnhideHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -183,13 +183,13 @@ object TempMomentsUnhideHook : HookLifecycleListener {
     private fun onMomentsEnter(param: XC_MethodHook.MethodHookParam) {
         try {
             val context = MainHook.appContext ?: return
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             val hiddenIds = ConfigManager.getMomentsHiddenIds(context)
             if (hiddenIds.isEmpty()) return
 
             // 检查 TempUnhideManager 是否处于临时取消隐藏状态
-            if (TempUnhideManager.isTempUnhidden(context)) {
+            if (TempUnhideManager.getTempUnhiddenIds().isNotEmpty()) {
                 isUnfiltered = true
                 LogUtil.i(TAG, "Moments unfiltered mode enabled (temp unhide active)")
             } else {

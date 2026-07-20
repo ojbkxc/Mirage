@@ -45,7 +45,7 @@ object MiscHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -190,7 +190,7 @@ object MiscHook : HookLifecycleListener {
             val hiddenIds = ConfigManager.getOtherMiscHiddenIds(context)
             if (hiddenIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
             LogUtil.d(TAG, "Filtering misc items, hidden count: ${hiddenIds.size}")
 
             filterListViewItems(param.thisObject, hiddenIds)

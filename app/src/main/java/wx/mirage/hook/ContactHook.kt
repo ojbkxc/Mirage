@@ -41,7 +41,7 @@ object ContactHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -181,7 +181,7 @@ object ContactHook : HookLifecycleListener {
             val hiddenIds = ConfigManager.getContactHiddenIds(context)
             if (hiddenIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
             LogUtil.d(TAG, "Filtering contacts, hidden count: ${hiddenIds.size}")
 
             val activity = param.thisObject

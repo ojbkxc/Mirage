@@ -49,7 +49,7 @@ object ChatInputHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -176,7 +176,7 @@ object ChatInputHook : HookLifecycleListener {
     private fun attachTextWatcher(param: XC_MethodHook.MethodHookParam) {
         try {
             val activity = param.thisObject
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             // 查找 EditText（聊天输入框）
             val editText = findEditText(activity) ?: run {
@@ -259,13 +259,16 @@ object ChatInputHook : HookLifecycleListener {
         when {
             text.startsWith("#unhide") || text.contains("#临时取消隐藏") -> {
                 LogUtil.i(TAG, "Command: unhide all")
-                TempUnhideManager.tempUnhide(context)
+                val hiddenIds = ConfigManager.getHiddenWxIds(context)
+                for (id in hiddenIds) {
+                    TempUnhideManager.tempUnhide(id)
+                }
                 clearEditText()
             }
 
             text.startsWith("#hide") || text.contains("#恢复隐藏") -> {
                 LogUtil.i(TAG, "Command: restore hide")
-                TempUnhideManager.restoreAll(context)
+                TempUnhideManager.restoreAll()
                 clearEditText()
             }
 

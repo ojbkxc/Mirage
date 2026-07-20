@@ -44,7 +44,7 @@ object SearchInputHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -172,7 +172,7 @@ object SearchInputHook : HookLifecycleListener {
     private fun attachSearchWatcher(param: XC_MethodHook.MethodHookParam) {
         try {
             val activity = param.thisObject
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             val editText = findSearchEditText(activity) ?: run {
                 LogUtil.d(TAG, "No search EditText found")

@@ -41,7 +41,7 @@ object NotificationHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -205,7 +205,7 @@ object NotificationHook : HookLifecycleListener {
             val blockedIds = ConfigManager.getNotificationBlockedIds(context)
             if (blockedIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             // 从方法参数中提取发送者 wxId
             val senderWxId = extractSenderWxId(param)

@@ -42,7 +42,7 @@ object MomentsHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -179,7 +179,7 @@ object MomentsHook : HookLifecycleListener {
             val hiddenIds = ConfigManager.getMomentsHiddenIds(context)
             if (hiddenIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
             LogUtil.d(TAG, "Filtering moments, hidden count: ${hiddenIds.size}")
 
             filterMomentsTimeline(param.thisObject, hiddenIds)

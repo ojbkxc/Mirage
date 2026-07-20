@@ -43,7 +43,7 @@ object VoiceCallHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -153,7 +153,7 @@ object VoiceCallHook : HookLifecycleListener {
             val blockedIds = ConfigManager.getVoiceCallBlockedIds(context)
             if (blockedIds.isEmpty()) return
 
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             // 从 Activity 的 Intent 中提取对方 wxId
             val remoteWxId = extractRemoteWxId(param.thisObject)

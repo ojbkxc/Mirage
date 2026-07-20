@@ -39,7 +39,7 @@ object MessageAntiRevokeHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         try {
-            if (MainHook.dexKitAvailable && MainHook::dexKitBridge.isInitialized) {
+            if (false) {
                 initWithDexKit(lpparam)
             } else {
                 initFallback(classLoader)
@@ -211,7 +211,7 @@ object MessageAntiRevokeHook : HookLifecycleListener {
 
     private fun blockRevoke(param: XC_MethodHook.MethodHookParam) {
         try {
-            HookMetrics.recordHookExecution(TAG)
+            HookMetrics.recordSuccess(TAG)
 
             // 检查参数中是否包含撤回相关的消息标识
             val isRevokeMsg = checkIfRevokeMessage(param)
