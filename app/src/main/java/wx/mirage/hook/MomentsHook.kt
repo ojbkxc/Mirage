@@ -67,9 +67,11 @@ object MomentsHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val momentsClass = MainHook.dexKitBridge.findClass {
-            searchString = "sns"
-            searchPackage = Constants.WECHAT_PLUGIN_SNS
-        }
+            searchPackages = listOf(Constants.WECHAT_PLUGIN_SNS)
+            matcher {
+                usingStrings = listOf("sns")
+            }
+        }.firstOrNull()
 
         if (momentsClass != null) {
             targetClass = classLoader.loadClass(momentsClass.name)
@@ -147,7 +149,7 @@ object MomentsHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

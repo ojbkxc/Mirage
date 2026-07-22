@@ -69,9 +69,11 @@ object TempMomentsUnhideHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val snsClass = MainHook.dexKitBridge.findClass {
-            searchString = "sns"
-            searchPackage = Constants.WECHAT_PLUGIN_SNS
-        }
+            searchPackages = listOf(Constants.WECHAT_PLUGIN_SNS)
+            matcher {
+                usingStrings = listOf("sns")
+            }
+        }.firstOrNull()
 
         if (snsClass != null) {
             targetClass = classLoader.loadClass(snsClass.name)
@@ -160,7 +162,7 @@ object TempMomentsUnhideHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

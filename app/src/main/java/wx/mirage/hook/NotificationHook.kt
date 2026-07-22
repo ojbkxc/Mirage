@@ -66,8 +66,10 @@ object NotificationHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val notifyClass = MainHook.dexKitBridge.findClass {
-            searchString = "notification"
-        }
+            matcher {
+                usingStrings = listOf("notification")
+            }
+        }.firstOrNull()
 
         if (notifyClass != null) {
             targetClass = classLoader.loadClass(notifyClass.name)
@@ -177,7 +179,7 @@ object NotificationHook : HookLifecycleListener {
                     val methods = clazz.declaredMethods.filter { it.name == method }
                     for (m in methods) {
                         try {
-                            XposedBridge.unhookMethod(m)
+                            XposedBridge.unhookMethod(m, null)
                         } catch (_: Throwable) {}
                     }
                 }

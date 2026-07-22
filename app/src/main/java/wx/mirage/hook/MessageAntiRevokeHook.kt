@@ -65,8 +65,10 @@ object MessageAntiRevokeHook : HookLifecycleListener {
 
         // 查找消息撤回相关类
         val revokeClass = MainHook.dexKitBridge.findClass {
-            searchString = "revoke"
-        }
+            matcher {
+                usingStrings = listOf("revoke")
+            }
+        }.firstOrNull()
 
         if (revokeClass != null) {
             targetClass = classLoader.loadClass(revokeClass.name)
@@ -78,9 +80,11 @@ object MessageAntiRevokeHook : HookLifecycleListener {
         // 尝试查找消息处理类
         if (targetClass == null) {
             val msgClass = MainHook.dexKitBridge.findClass {
-                searchString = "message"
-                searchPackage = "com.tencent.mm.model"
-            }
+                searchPackages = listOf("com.tencent.mm.model")
+                matcher {
+                    usingStrings = listOf("message")
+                }
+            }.firstOrNull()
             if (msgClass != null) {
                 targetClass = classLoader.loadClass(msgClass.name)
                 targetMethodName = findRevokeMethod(msgClass.name, classLoader)
@@ -187,7 +191,7 @@ object MessageAntiRevokeHook : HookLifecycleListener {
                     val methods = clazz.declaredMethods.filter { it.name == method }
                     for (m in methods) {
                         try {
-                            XposedBridge.unhookMethod(m)
+                            XposedBridge.unhookMethod(m, null)
                         } catch (_: Throwable) {}
                     }
                 }

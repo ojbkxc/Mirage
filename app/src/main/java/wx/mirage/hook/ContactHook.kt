@@ -67,9 +67,11 @@ object ContactHook : HookLifecycleListener {
 
         // 尝试查找联系人 UI 类
         val contactsClass = MainHook.dexKitBridge.findClass {
-            searchString = "contact"
-            searchPackage = Constants.WECHAT_UI_CONTACT
-        }
+            searchPackages = listOf(Constants.WECHAT_UI_CONTACT)
+            matcher {
+                usingStrings = listOf("contact")
+            }
+        }.firstOrNull()
 
         if (contactsClass != null) {
             targetClass = classLoader.loadClass(contactsClass.name)
@@ -155,7 +157,7 @@ object ContactHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

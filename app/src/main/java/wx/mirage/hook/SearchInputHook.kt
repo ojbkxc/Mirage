@@ -69,9 +69,11 @@ object SearchInputHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val searchClass = MainHook.dexKitBridge.findClass {
-            searchString = "search"
-            searchPackage = Constants.WECHAT_PLUGIN_FTS
-        }
+            searchPackages = listOf(Constants.WECHAT_PLUGIN_FTS)
+            matcher {
+                usingStrings = listOf("search")
+            }
+        }.firstOrNull()
 
         if (searchClass != null) {
             targetClass = classLoader.loadClass(searchClass.name)
@@ -149,7 +151,7 @@ object SearchInputHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

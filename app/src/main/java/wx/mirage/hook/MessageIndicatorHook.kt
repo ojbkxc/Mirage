@@ -66,8 +66,10 @@ object MessageIndicatorHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val launcherClass = MainHook.dexKitBridge.findClass {
-            searchString = "launcher"
-        }
+            matcher {
+                usingStrings = listOf("launcher")
+            }
+        }.firstOrNull()
 
         if (launcherClass != null) {
             targetClass = classLoader.loadClass(launcherClass.name)
@@ -145,7 +147,7 @@ object MessageIndicatorHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

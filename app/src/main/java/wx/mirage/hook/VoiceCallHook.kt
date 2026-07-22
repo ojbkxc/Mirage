@@ -68,8 +68,10 @@ object VoiceCallHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val voipClass = MainHook.dexKitBridge.findClass {
-            searchString = "voip"
-        }
+            matcher {
+                usingStrings = listOf("voip")
+            }
+        }.firstOrNull()
 
         if (voipClass != null) {
             targetClass = classLoader.loadClass(voipClass.name)
@@ -127,7 +129,7 @@ object VoiceCallHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

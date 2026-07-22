@@ -61,9 +61,11 @@ object LongPressHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val contactClass = MainHook.dexKitBridge.findClass {
-            searchString = "contact"
-            searchPackage = Constants.WECHAT_UI_CONTACT
-        }
+            searchPackages = listOf(Constants.WECHAT_UI_CONTACT)
+            matcher {
+                usingStrings = listOf("contact")
+            }
+        }.firstOrNull()
 
         if (contactClass != null) {
             targetClass = classLoader.loadClass(contactClass.name)
@@ -141,7 +143,7 @@ object LongPressHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

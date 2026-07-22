@@ -74,9 +74,11 @@ object ChatInputHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val chattingClass = MainHook.dexKitBridge.findClass {
-            searchString = "chatting"
-            searchPackage = Constants.WECHAT_CHATTING_COMPONENT
-        }
+            searchPackages = listOf(Constants.WECHAT_CHATTING_COMPONENT)
+            matcher {
+                usingStrings = listOf("chatting")
+            }
+        }.firstOrNull()
 
         if (chattingClass != null) {
             targetClass = classLoader.loadClass(chattingClass.name)
@@ -153,7 +155,7 @@ object ChatInputHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

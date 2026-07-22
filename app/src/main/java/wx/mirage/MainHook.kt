@@ -140,6 +140,105 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
         @JvmStatic
         var modulePath: String? = null
             private set
+
+        /**
+         * 清除所有 Hook 模块中的 DexKit 缓存
+         */
+        @JvmStatic
+        fun clearAllDexKitCaches() {
+            try {
+                ChatInputHook.clearDexKitCache()
+                ContactHook.clearDexKitCache()
+                ConversationHook.clearDexKitCache()
+                ConversationLongClickHook.clearDexKitCache()
+                GroupMemberHook.clearDexKitCache()
+                LongPressHook.clearDexKitCache()
+                MessageAntiRevokeHook.clearDexKitCache()
+                MessageIndicatorHook.clearDexKitCache()
+                MiscHook.clearDexKitCache()
+                MomentsAdRemovalHook.clearDexKitCache()
+                MomentsHook.clearDexKitCache()
+                NotificationHook.clearDexKitCache()
+                SearchHook.clearDexKitCache()
+                SearchInputHook.clearDexKitCache()
+                TempMomentsUnhideHook.clearDexKitCache()
+                VoiceCallHook.clearDexKitCache()
+                LogUtil.d(Constants.MODULE_TAG, "All DexKit caches cleared")
+            } catch (e: Throwable) {
+                LogUtil.w(Constants.MODULE_TAG, "Error clearing DexKit caches: ${e.message}")
+            }
+        }
+
+        /**
+         * 注册所有 Hook 模块。
+         */
+        @JvmStatic
+        fun registerAllHooks(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
+            if (hooksRegistered) {
+                LogUtil.i(Constants.MODULE_TAG, "Hooks already registered, skipping")
+                return true
+            }
+
+            LogUtil.i(Constants.MODULE_TAG, "Starting hook registration...")
+
+            val hookModules = listOf(
+                Triple("ChatInputHook", { ChatInputHook.init(lpparam) }, ChatInputHook as HookLifecycleListener),
+                Triple("ContactHook", { ContactHook.init(lpparam) }, ContactHook as HookLifecycleListener),
+                Triple("ConversationHook", { ConversationHook.init(lpparam) }, ConversationHook as HookLifecycleListener),
+                Triple("ConversationLongClickHook", { ConversationLongClickHook.init(lpparam) }, ConversationLongClickHook as HookLifecycleListener),
+                Triple("GroupMemberHook", { GroupMemberHook.init(lpparam) }, GroupMemberHook as HookLifecycleListener),
+                Triple("LongPressHook", { LongPressHook.init(lpparam) }, LongPressHook as HookLifecycleListener),
+                Triple("MessageAntiRevokeHook", { MessageAntiRevokeHook.init(lpparam) }, MessageAntiRevokeHook as HookLifecycleListener),
+                Triple("MessageIndicatorHook", { MessageIndicatorHook.init(lpparam) }, MessageIndicatorHook as HookLifecycleListener),
+                Triple("MiscHook", { MiscHook.init(lpparam) }, MiscHook as HookLifecycleListener),
+                Triple("MomentsAdRemovalHook", { MomentsAdRemovalHook.init(lpparam) }, MomentsAdRemovalHook as HookLifecycleListener),
+                Triple("MomentsHook", { MomentsHook.init(lpparam) }, MomentsHook as HookLifecycleListener),
+                Triple("NotificationHook", { NotificationHook.init(lpparam) }, NotificationHook as HookLifecycleListener),
+                Triple("SearchHook", { SearchHook.init(lpparam) }, SearchHook as HookLifecycleListener),
+                Triple("SearchInputHook", { SearchInputHook.init(lpparam) }, SearchInputHook as HookLifecycleListener),
+                Triple("TempMomentsUnhideHook", { TempMomentsUnhideHook.init(lpparam) }, TempMomentsUnhideHook as HookLifecycleListener),
+                Triple("VoiceCallHook", { VoiceCallHook.init(lpparam) }, VoiceCallHook as HookLifecycleListener)
+            )
+
+            var successCount = 0
+            var failCount = 0
+
+            for ((name, initFn, lifecycleListener) in hookModules) {
+                try {
+                    initFn()
+                    successCount++
+                    LogUtil.i(Constants.MODULE_TAG, "$name registered OK")
+                } catch (e: Throwable) {
+                    failCount++
+                    LogUtil.e(Constants.MODULE_TAG, "$name FAILED: ${e.message}", e)
+                    try {
+                        lifecycleListener.onHookFailed(e)
+                    } catch (_: Throwable) {
+                    }
+                }
+            }
+
+            hooksRegistered = true
+            hookStatus = if (failCount == 0) {
+                if (dexKitAvailable) HookStatus.ACTIVE else HookStatus.DEGRADED
+            } else if (successCount > 0) {
+                HookStatus.DEGRADED
+            } else {
+                HookStatus.ERROR
+            }
+            LogUtil.i(Constants.MODULE_TAG, "Done - $successCount success, $failCount failed (status: ${hookStatus.description})")
+
+            try {
+                appContext?.let { ctx ->
+                    ConfigReceiver.register(ctx)
+                    LogUtil.i(Constants.MODULE_TAG, "ConfigReceiver registered")
+                }
+            } catch (e: Throwable) {
+                LogUtil.w(Constants.MODULE_TAG, "Failed to register ConfigReceiver: ${e.message}")
+            }
+
+            return successCount > 0
+        }
     }
 
     /**
@@ -316,33 +415,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
             LogUtil.i(Constants.MODULE_TAG, "========== Mirage module shut down complete ==========")
         } catch (e: Throwable) {
             LogUtil.e(Constants.MODULE_TAG, "Error during shutdown: ${e.message}", e)
-        }
-    }
-
-    /**
-     * 清除所有 Hook 模块中的 DexKit 缓存
-     */
-    internal fun clearAllDexKitCaches() {
-        try {
-            ChatInputHook.clearDexKitCache()
-            ContactHook.clearDexKitCache()
-            ConversationHook.clearDexKitCache()
-            ConversationLongClickHook.clearDexKitCache()
-            GroupMemberHook.clearDexKitCache()
-            LongPressHook.clearDexKitCache()
-            MessageAntiRevokeHook.clearDexKitCache()
-            MessageIndicatorHook.clearDexKitCache()
-            MiscHook.clearDexKitCache()
-            MomentsAdRemovalHook.clearDexKitCache()
-            MomentsHook.clearDexKitCache()
-            NotificationHook.clearDexKitCache()
-            SearchHook.clearDexKitCache()
-            SearchInputHook.clearDexKitCache()
-            TempMomentsUnhideHook.clearDexKitCache()
-            VoiceCallHook.clearDexKitCache()
-            LogUtil.d(Constants.MODULE_TAG, "All DexKit caches cleared")
-        } catch (e: Throwable) {
-            LogUtil.w(Constants.MODULE_TAG, "Error clearing DexKit caches: ${e.message}")
         }
     }
 
@@ -597,87 +669,6 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         LogUtil.i(Constants.MODULE_TAG, "No WeChat App class found")
         return null
-    }
-
-    /**
-     * 注册所有 Hook 模块。
-     *
-     * 按顺序注册 ContactHook -> ConversationHook -> MomentsHook ->
-     * NotificationHook -> SearchHook -> GroupMemberHook。
-     * 每个模块独立 try-catch，单个模块失败不影响其他模块的注册。
-     * 注册完成后，所有模块的 init() 方法会调用 onHookRegistered() 回调。
-     *
-     * @param lpparam Xposed LoadPackage 参数
-     * @return true 如果至少有一个 Hook 模块注册成功，false 如果全部失败
-     */
-    fun registerAllHooks(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
-        if (hooksRegistered) {
-            LogUtil.i(Constants.MODULE_TAG, "Hooks already registered, skipping")
-            return true
-        }
-
-        LogUtil.i(Constants.MODULE_TAG, "Starting hook registration...")
-
-        // 按顺序注册各模块 Hook，每个模块独立 try-catch，互不影响
-        val hookModules = listOf(
-            Triple("ChatInputHook", { ChatInputHook.init(lpparam) }, ChatInputHook as HookLifecycleListener),
-            Triple("ContactHook", { ContactHook.init(lpparam) }, ContactHook as HookLifecycleListener),
-            Triple("ConversationHook", { ConversationHook.init(lpparam) }, ConversationHook as HookLifecycleListener),
-            Triple("ConversationLongClickHook", { ConversationLongClickHook.init(lpparam) }, ConversationLongClickHook as HookLifecycleListener),
-            Triple("GroupMemberHook", { GroupMemberHook.init(lpparam) }, GroupMemberHook as HookLifecycleListener),
-            Triple("LongPressHook", { LongPressHook.init(lpparam) }, LongPressHook as HookLifecycleListener),
-            Triple("MessageAntiRevokeHook", { MessageAntiRevokeHook.init(lpparam) }, MessageAntiRevokeHook as HookLifecycleListener),
-            Triple("MessageIndicatorHook", { MessageIndicatorHook.init(lpparam) }, MessageIndicatorHook as HookLifecycleListener),
-            Triple("MiscHook", { MiscHook.init(lpparam) }, MiscHook as HookLifecycleListener),
-            Triple("MomentsAdRemovalHook", { MomentsAdRemovalHook.init(lpparam) }, MomentsAdRemovalHook as HookLifecycleListener),
-            Triple("MomentsHook", { MomentsHook.init(lpparam) }, MomentsHook as HookLifecycleListener),
-            Triple("NotificationHook", { NotificationHook.init(lpparam) }, NotificationHook as HookLifecycleListener),
-            Triple("SearchHook", { SearchHook.init(lpparam) }, SearchHook as HookLifecycleListener),
-            Triple("SearchInputHook", { SearchInputHook.init(lpparam) }, SearchInputHook as HookLifecycleListener),
-            Triple("TempMomentsUnhideHook", { TempMomentsUnhideHook.init(lpparam) }, TempMomentsUnhideHook as HookLifecycleListener),
-            Triple("VoiceCallHook", { VoiceCallHook.init(lpparam) }, VoiceCallHook as HookLifecycleListener)
-        )
-
-        var successCount = 0
-        var failCount = 0
-
-        for ((name, initFn, lifecycleListener) in hookModules) {
-            try {
-                initFn()
-                successCount++
-                LogUtil.i(Constants.MODULE_TAG, "$name registered OK")
-            } catch (e: Throwable) {
-                failCount++
-                LogUtil.e(Constants.MODULE_TAG, "$name FAILED: ${e.message}", e)
-                try {
-                    lifecycleListener.onHookFailed(e)
-                } catch (_: Throwable) {
-                    // 生命周期回调本身不应影响主流程
-                }
-            }
-        }
-
-        hooksRegistered = true
-        hookStatus = if (failCount == 0) {
-            if (dexKitAvailable) HookStatus.ACTIVE else HookStatus.DEGRADED
-        } else if (successCount > 0) {
-            HookStatus.DEGRADED
-        } else {
-            HookStatus.ERROR
-        }
-        LogUtil.i(Constants.MODULE_TAG, "Done - $successCount success, $failCount failed (status: ${hookStatus.description})")
-
-        // 注册广播接收器
-        try {
-            appContext?.let { ctx ->
-                ConfigReceiver.register(ctx)
-                LogUtil.i(Constants.MODULE_TAG, "ConfigReceiver registered")
-            }
-        } catch (e: Throwable) {
-            LogUtil.w(Constants.MODULE_TAG, "Failed to register ConfigReceiver: ${e.message}")
-        }
-
-        return successCount > 0
     }
 
     /**

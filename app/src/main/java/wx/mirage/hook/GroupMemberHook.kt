@@ -66,9 +66,11 @@ object GroupMemberHook : HookLifecycleListener {
         val classLoader = lpparam.classLoader
 
         val groupMemberClass = MainHook.dexKitBridge.findClass {
-            searchString = "group"
-            searchPackage = Constants.WECHAT_CHATTING_COMPONENT
-        }
+            searchPackages = listOf(Constants.WECHAT_CHATTING_COMPONENT)
+            matcher {
+                usingStrings = listOf("group")
+            }
+        }.firstOrNull()
 
         if (groupMemberClass != null) {
             targetClass = classLoader.loadClass(groupMemberClass.name)
@@ -148,7 +150,7 @@ object GroupMemberHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}

@@ -71,8 +71,10 @@ object MiscHook : HookLifecycleListener {
 
         // 尝试查找存储管理相关类
         val cleanClass = MainHook.dexKitBridge.findClass {
-            searchString = "clean"
-        }
+            matcher {
+                usingStrings = listOf("clean")
+            }
+        }.firstOrNull()
 
         if (cleanClass != null) {
             targetClass = classLoader.loadClass(cleanClass.name)
@@ -84,9 +86,11 @@ object MiscHook : HookLifecycleListener {
 
         // 尝试查找聊天相关类
         val chattingClass = MainHook.dexKitBridge.findClass {
-            searchString = "chatting"
-            searchPackage = Constants.WECHAT_CHATTING_COMPONENT
-        }
+            searchPackages = listOf(Constants.WECHAT_CHATTING_COMPONENT)
+            matcher {
+                usingStrings = listOf("chatting")
+            }
+        }.firstOrNull()
         if (chattingClass != null) {
             targetClass = classLoader.loadClass(chattingClass.name)
             targetMethodName = "onResume"
@@ -164,7 +168,7 @@ object MiscHook : HookLifecycleListener {
         try {
             targetClass?.let { clazz ->
                 targetMethodName?.let { method ->
-                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method))
+                    XposedBridge.unhookMethod(clazz.getDeclaredMethod(method), null)
                 }
             }
         } catch (_: Throwable) {}
