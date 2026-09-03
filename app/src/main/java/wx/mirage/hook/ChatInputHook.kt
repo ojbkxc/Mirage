@@ -90,7 +90,7 @@ object ChatInputHook : HookLifecycleListener {
 
     private fun initFallback(classLoader: ClassLoader) {
         val candidates = listOf(
-            "${Constants.WECHAT_CHATTING_COMPONENT}.ChattingUIFragment",
+            Constants.WECHAT_CHATTING_BASE_FRAGMENT,
             "com.tencent.mm.ui.chatting.ChattingUI",
             "com.tencent.mm.ui.chatting.ChatFooter",
             "com.tencent.mm.ui.chatting.ChattingUIFragment"

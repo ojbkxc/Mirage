@@ -104,7 +104,7 @@ object MessageAntiRevokeHook : HookLifecycleListener {
             "com.tencent.mm.model.aj",
             "com.tencent.mm.model.ak",
             "com.tencent.mm.app.plugin.voicereminder.a",
-            "${Constants.WECHAT_CHATTING_COMPONENT}.ChattingUIFragment"
+            Constants.WECHAT_CHATTING_BASE_FRAGMENT
         )
 
         for (className in candidates) {

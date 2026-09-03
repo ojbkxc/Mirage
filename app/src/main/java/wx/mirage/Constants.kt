@@ -44,7 +44,8 @@ object Constants {
 
     // ========== WAuxiliary 验证过的微信关键包名 ==========
 
-    const val WECHAT_CHATTING_COMPONENT = "com.tencent.mm.ui.chatting.component"
+    const val WECHAT_CHATTING_COMPONENT = "com.tencent.mm.ui.chatting"
+    const val WECHAT_CHATTING_BASE_FRAGMENT = "com.tencent.mm.ui.chatting.BaseChattingUIFragment"
     const val WECHAT_CHATTING_GALLERY = "com.tencent.mm.ui.chatting.gallery"
     const val WECHAT_PLUGIN_GALLERY = "com.tencent.mm.plugin.gallery"
     const val WECHAT_PLUGIN_SNS = "com.tencent.mm.plugin.sns"

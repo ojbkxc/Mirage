@@ -104,7 +104,7 @@ object MiscHook : HookLifecycleListener {
             "com.tencent.mm.plugin.clean.ui.CleanUI",
             "com.tencent.mm.plugin.clean.ui.StorageCleanUI",
             "com.tencent.mm.ui.tools.MMListPopupWindow",
-            "${Constants.WECHAT_CHATTING_COMPONENT}.ChattingUIFragment",
+            Constants.WECHAT_CHATTING_BASE_FRAGMENT,
             "com.tencent.mm.ui.chatting.ChattingUI",
             "com.tencent.mm.ui.tools.NewFitSystemWindowView"
         )
