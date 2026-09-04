@@ -31,7 +31,7 @@ jobs:
           cd /tmp
           mkdir -p gradle-gen && cd gradle-gen
           echo 'rootProject.name = "temp"' > settings.gradle
-          gradle wrapper --gradle-version 8.2
+          gradle wrapper --gradle-version 9.5.1
           cd "$GITHUB_WORKSPACE"
           mkdir -p gradle/wrapper
           cp /tmp/gradle-gen/gradlew /tmp/gradle-gen/gradlew.bat .
