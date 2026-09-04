@@ -429,7 +429,7 @@ class EnterChattingHookAction(
                             if (chatListView.visibility == View.VISIBLE) {
                                 chatListView.visibility = View.INVISIBLE
                             }
-                        }, cipher.duration)
+                        }, cipher.duration.toLong())
                     } else {
                         ToastUtil.show("密码错误")
                     }
