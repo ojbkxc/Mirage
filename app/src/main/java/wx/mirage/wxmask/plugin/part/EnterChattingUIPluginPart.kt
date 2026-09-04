@@ -28,6 +28,8 @@ import wx.mirage.wxmask.bean.QuickTemporaryBean
 import wx.mirage.wxmask.bean.CipherTemporaryBean
 import wx.mirage.wxmask.plugin.WXConfigPlugin
 import wx.mirage.wxmask.plugin.WXMaskPlugin
+import wx.mirage.wxmask.plugin.ui.ConfigManagerUI
+import wx.mirage.wxmask.plugin.ui.MaskManagerCenterUI
 import wx.mirage.wxmask.util.AppVersionUtil
 import wx.mirage.wxmask.util.ClipboardUtil
 import wx.mirage.wxmask.util.ConfigUtil
@@ -270,6 +272,18 @@ class EnterChattingHookAction(
                 "#mcopyId" -> {
                     ClipboardUtil.copy(chatUser)
                     ToastUtil.show(activity, "已复制wxid:" + chatUser)
+                    editable.clear()
+                }
+
+                "#mconfig" -> {
+                    // 打开密友名单管理页
+                    ConfigManagerUI(activity).show()
+                    editable.clear()
+                }
+
+                "#mcenter" -> {
+                    // 打开配置中心（临时解除/实验室开关）
+                    MaskManagerCenterUI(activity).show()
                     editable.clear()
                 }
             }

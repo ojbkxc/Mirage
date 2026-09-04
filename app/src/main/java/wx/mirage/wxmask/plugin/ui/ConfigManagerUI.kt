@@ -33,7 +33,7 @@ interface IConfigManagerUI {
 }
 
 // PopWindow全屏+返回键监听弹窗，暂不需要，没有那么多配置
-internal class ConfigManagerUI(private val context: Activity) : IConfigManagerUI {
+class ConfigManagerUI(private val context: Activity) : IConfigManagerUI {
     private lateinit var listAdapter: CommonListAdapter<MaskItemBean, AbsListAdapter.ViewHolder>
     private val popwindow: BottomPopUI
     private lateinit var listView: ListView
