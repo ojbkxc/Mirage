@@ -1,69 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mirage</string>
-
-    <!-- ===== Action Bar ===== -->
+    <string name="app_xposed_description">隐藏微信里特定用户的聊天记录</string>
+    <string name="module_not_active">模块未激活</string>
+    <string name="module_have_active">模块已激活</string>
+    <string name="module_version">模块版本</string>
+    <string name="donate">捐赠</string>
+    <string name="config_manager">配置管理</string>
+    <string name="config_add">添加配置</string>
+    <string name="click_here_to_manager">点击此处管理配置</string>
+    <string name="click_here_to_add">点击添加配置</string>
+    <string name="donate_description">万水千山总是情，打赏一点也是情</string>
     <string name="action_bar_title">Mirage - 微信好友隐身</string>
-
-    <!-- ===== 主界面标签 ===== -->
     <string name="switch_enable_label">启用好友隐身</string>
     <string name="hidden_friends_label">已隐藏的好友 (长按移除):</string>
-
-    <!-- ===== 按钮文本 ===== -->
     <string name="btn_add_hidden">添加隐藏好友</string>
     <string name="btn_refresh">刷新</string>
     <string name="btn_export">导出</string>
     <string name="btn_import">导入</string>
     <string name="btn_clear_all">清空全部</string>
-
-    <!-- ===== 对话框标题 ===== -->
     <string name="dialog_add_title">添加隐藏好友</string>
     <string name="dialog_remove_title">移除</string>
     <string name="dialog_clear_all_title">清空全部</string>
     <string name="dialog_export_title">导出成功</string>
     <string name="dialog_import_title">导入隐藏好友列表</string>
-
-    <!-- ===== 对话框按钮 ===== -->
     <string name="dialog_confirm">确定</string>
     <string name="dialog_cancel">取消</string>
     <string name="dialog_add">添加</string>
     <string name="dialog_import">导入</string>
     <string name="dialog_clear_all_confirm">确认清空</string>
-
-    <!-- ===== 对话框消息 ===== -->
     <string name="dialog_remove_message">确定要移除 %s 的隐藏吗?</string>
     <string name="dialog_clear_all_message">确定要移除所有隐藏好友吗？\n\n当前共 %d 个隐藏好友。\n此操作不可撤销！</string>
     <string name="dialog_export_message">隐藏好友列表已复制到剪贴板。\n\n共 %d 个好友。\n\n你可以将剪贴板内容粘贴到安全的地方保存。</string>
-
-    <!-- ===== 输入框提示 ===== -->
     <string name="hint_input_wxid">输入要隐藏的微信 ID (wxid_xxx)</string>
     <string name="hint_label_optional">标签/备注 (可选)</string>
     <string name="hint_paste_json">粘贴导出的 JSON 数据</string>
-
-    <!-- ===== Toast 消息 ===== -->
     <string name="toast_refreshed">已刷新</string>
     <string name="toast_added">已添加: %s</string>
     <string name="toast_cleared_all">已清空全部隐藏好友</string>
     <string name="toast_enter_json">请输入 JSON 数据</string>
     <string name="toast_import_success">成功导入 %d 个好友</string>
     <string name="toast_import_failed">导入失败：JSON 格式不正确</string>
-
-    <!-- ===== 剪贴板标签 ===== -->
     <string name="clipboard_label">Mirage Backup</string>
-
-    <!-- ===== 统计信息菜单 ===== -->
     <string name="menu_statistics">统计信息</string>
     <string name="menu_settings">设置</string>
     <string name="stats_title">Mirage 运行统计</string>
-
-    <!-- ===== 统计信息字段 ===== -->
     <string name="stats_total_hidden">总隐藏好友数:</string>
     <string name="stats_hook_status">Hook 注册状态:</string>
     <string name="stats_dexkit_status">DexKit 状态:</string>
     <string name="stats_uptime">模块运行时间:</string>
     <string name="stats_module_enabled">模块启用状态:</string>
-
-    <!-- ===== 统计信息状态值 ===== -->
     <string name="stats_status_ok">正常</string>
     <string name="stats_status_not_ok">未注册</string>
     <string name="stats_dexkit_unavailable">不可用（降级模式）</string>
@@ -71,13 +56,9 @@
     <string name="stats_yes">是</string>
     <string name="stats_no">否</string>
     <string name="stats_uptime_unknown">未知</string>
-
-    <!-- ===== 统计信息运行时间格式 ===== -->
     <string name="stats_uptime_m">%d 分钟</string>
     <string name="stats_uptime_hm">%1$d 小时 %2$d 分钟</string>
     <string name="stats_uptime_dhm">%1$d 天 %2$d 小时 %3$d 分钟</string>
-
-    <!-- ===== 设置页面 ===== -->
     <string name="settings_title">设置</string>
     <string name="settings_debug_mode">Debug 模式</string>
     <string name="settings_log_level">日志级别</string>
@@ -94,17 +75,11 @@
     <string name="settings_hooks_reload_triggered">Hook 重载已触发，可能需要重启微信</string>
     <string name="settings_hooks_need_restart">请重启微信以重新加载 Hook</string>
     <string name="settings_hooks_reload_failed">重载失败: %s</string>
-
-    <!-- ===== 配置验证消息 ===== -->
     <string name="toast_invalid_wxid">wxId 格式无效: %s</string>
     <string name="toast_invalid_label">标签格式无效: %s</string>
     <string name="toast_import_invalid">导入数据无效: %s</string>
     <string name="toast_blacklisted_wxid">无法添加 \"%s\"：该 wxId 为系统账户，不允许隐藏</string>
-
-    <!-- ===== 备份管理菜单 ===== -->
     <string name="menu_backup">备份</string>
-
-    <!-- ===== 备份管理 ===== -->
     <string name="backup_create">创建备份</string>
     <string name="backup_restore">恢复备份</string>
     <string name="backup_success_title">备份成功</string>
@@ -125,15 +100,11 @@
     <string name="backup_delete_old_msg">当前共有 %d 个备份文件。\n\n请输入要保留的备份数量：</string>
     <string name="backup_keep_count_hint">保留数量（默认 5）</string>
     <string name="backup_delete_old_result">已删除 %1$d 个旧备份，保留 %2$d 个</string>
-
-    <!-- ===== 设置页面 - 备份管理 ===== -->
     <string name="settings_backup_section">备份管理</string>
     <string name="settings_create_backup">创建备份</string>
     <string name="settings_restore_backup">恢复备份</string>
     <string name="settings_list_backups">查看备份列表</string>
     <string name="settings_delete_old_backups">删除旧备份</string>
-
-    <!-- ===== 自定义权限声明 ===== -->
     <string name="permission_control_label">Mirage 配置控制</string>
     <string name="permission_control_desc">允许应用控制 Mirage 配置，包括重载配置、清除缓存等操作。仅授予与 Mirage 使用相同签名的应用。</string>
 </resources>

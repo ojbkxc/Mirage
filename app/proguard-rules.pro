@@ -42,3 +42,8 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+# ----- wxmask baseutils (jar, reflection) -----
+-keep class com.lu.magic.** { *; }
+-dontwarn com.lu.magic.**
+-keep class com.lu.lposed.** { *; }
+-dontwarn com.lu.lposed.**

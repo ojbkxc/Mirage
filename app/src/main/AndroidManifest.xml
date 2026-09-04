@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!--
         自定义权限：允许授权应用控制 Mirage 配置（重载配置、清除缓存等）。
-        保护级别为 signature，仅与 Mirage 使用相同签名的应用可获此权限。
-        外部应用如需通过广播控制 Mirage 配置，必须声明并使用此权限。
     -->
     <permission
         android:name="wx.mirage.permission.CONTROL"
         android:protectionLevel="signature"
         android:label="@string/permission_control_label"
         android:description="@string/permission_control_desc" />
-
-    <!-- 使用自定义权限（自身也需要） -->
     <uses-permission android:name="wx.mirage.permission.CONTROL" />
 
     <application
-        android:allowBackup="false"
+        android:name=".wxmask.App"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/Theme.MaskWechat"
+        tools:targetApi="31">
 
+        <!-- ===== Mirage 管理界面 ===== -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true">
@@ -44,13 +49,6 @@
             </intent-filter>
         </activity>
 
-        <!--
-            ConfigReceiver - 配置广播接收器
-            使用自定义权限 wx.mirage.permission.CONTROL 保护，
-            仅允许持有该权限的应用（相同签名）发送广播。
-            线程安全：BroadcastReceiver.onReceive() 在主线程调用，
-            不阻塞执行，耗时操作由各 Handler 方法内部处理。
-        -->
         <receiver
             android:name=".receiver.ConfigReceiver"
             android:exported="true"
@@ -66,7 +64,20 @@
             </intent-filter>
         </receiver>
 
-        <!-- Xposed 模块声明 -->
+        <!-- ===== Xposed 模块声明 ===== -->
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="82" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/xposed_scope" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="@string/app_xposed_description" />
+
         <meta-data
             android:name="xposed_module"
             android:value="true" />
@@ -78,11 +89,11 @@
             android:value="com.tencent.mm" />
         <meta-data
             android:name="xposed_description"
-            android:value="隐藏微信好友 - 不删除不屏蔽,好友仍可发消息打电话" />
+            android:value="@string/app_xposed_description" />
 
         <meta-data
             android:name="xposed_init"
-            android:value="wx.mirage.MainHook" />
+            android:value="wx.mirage.wxmask.MainHook" />
 
     </application>
 </manifest>

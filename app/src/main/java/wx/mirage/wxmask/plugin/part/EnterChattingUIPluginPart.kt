@@ -1,0 +1,432 @@
+package wx.mirage.wxmask.plugin.part
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.graphics.drawable.ColorDrawable
+import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import androidx.core.widget.addTextChangedListener
+import com.google.gson.JsonObject
+import com.lu.lposed.api2.XC_MethodHook2
+import com.lu.lposed.api2.XposedHelpers2
+import com.lu.lposed.plugin.IPlugin
+import com.lu.lposed.plugin.PluginProviders
+import com.lu.magic.util.ReflectUtil
+import com.lu.magic.util.ResUtil
+import com.lu.magic.util.ToastUtil
+import com.lu.magic.util.kxt.toElseEmptyString
+import com.lu.magic.util.log.LogUtil
+import com.lu.magic.util.view.ChildDeepCheck
+import wx.mirage.wxmask.ClazzN
+import wx.mirage.wxmask.Constrant
+import wx.mirage.wxmask.bean.MaskItemBean
+import wx.mirage.wxmask.bean.QuickTemporaryBean
+import wx.mirage.wxmask.plugin.WXConfigPlugin
+import wx.mirage.wxmask.plugin.WXMaskPlugin
+import wx.mirage.wxmask.util.AppVersionUtil
+import wx.mirage.wxmask.util.ClipboardUtil
+import wx.mirage.wxmask.util.ConfigUtil
+import wx.mirage.wxmask.util.QuickCountClickListenerUtil
+import wx.mirage.wxmask.util.ext.getViewId
+import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.callbacks.XC_LoadPackage
+
+/**
+ * 聊天页页面处理：
+ * 1、隐藏单聊/群聊聊天记录
+ */
+class EnterChattingUIPluginPart() : IPlugin {
+    override fun handleHook(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
+        handleChattingUIFragment(context, lpparam)
+    }
+
+    private fun handleChattingUIFragment(context: Context, lpparam: XC_LoadPackage.LoadPackageParam) {
+        val tagConst = "chatting-onEnterBegin"
+        val enterAction = EnterChattingHookAction(context, lpparam, tagConst)
+        runCatching {
+            XposedHelpers2.findAndHookMethod(
+                ClazzN.BaseChattingUIFragment,
+                context.classLoader,
+                "onActivityCreated",
+                Bundle::class.java,
+                object : XC_MethodHook2() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        super.afterHookedMethod(param)
+                        LogUtil.d("hook onActivityCreated")
+                        enterAction.handle(param)
+                    }
+                })
+        }.onFailure {
+            LogUtil.e("hook onActivityCreated error", it)
+            return
+        }
+
+//        实际上在onActivityCreated中调用了onEnterBegin，所以下面都不要了
+//        val onEnterBeginMethod = XposedHelpers2.findMethodExactIfExists(
+//            ClazzN.BaseChattingUIFragment,
+//            context.classLoader,
+//            "onEnterBegin"
+//        )
+//        if (onEnterBeginMethod == null) {
+//            LogUtil.d("onEnterBegin function == null, maybe change")
+//        } else {
+//            //8.0.22
+//            LogUtil.d("hook onEnterBegin")
+//            XposedHelpers2.hookMethod(
+//                onEnterBeginMethod,
+//                object : XC_MethodHook() {
+//                    val tagConst = "chatting-onEnterBegin"
+//                    val enterAction = EnterChattingHookAction(context, lpparam, tagConst)
+//                    override fun afterHookedMethod(param: MethodHookParam) {
+//                        enterAction.handle(param)
+//                    }
+//                })
+//            return
+//        }
+//
+//        //版本8.0.32-arm64反编译代码, I函数
+//        val dispatchMethodName = when (AppVersionUtil.getVersionCode()) {
+//            in Constrant.WX_CODE_8_0_32..Constrant.WX_CODE_8_0_33 -> "I"
+//            Constrant.WX_CODE_8_0_34 -> {
+//                if (AppVersionUtil.getVersionName() == "8.0.35") "J"
+//                else "M"
+//            }
+//
+//            Constrant.WX_CODE_8_0_35, Constrant.WX_CODE_PLAY_8_0_42 -> "J"
+//            Constrant.WX_CODE_8_0_37, Constrant.WX_CODE_8_0_43 -> "K"
+//            Constrant.WX_CODE_8_0_38 -> "M"
+//            in Constrant.WX_CODE_8_0_40..Constrant.WX_CODE_8_0_41 -> "K"
+//            in Constrant.WX_CODE_8_0_41..Constrant.WX_CODE_8_0_42 -> "M"
+//            in Constrant.WX_CODE_8_0_44..Constrant.WX_CODE_8_0_47 -> "z"
+//            Constrant.WX_CODE_PLAY_8_0_48, Constrant.WX_CODE_8_0_49 -> "B"
+//            Constrant.WX_CODE_8_0_50 -> "z"
+//            Constrant.WX_CODE_8_0_51, Constrant.WX_CODE_8_0_56 -> "G"
+//            Constrant.WX_CODE_8_0_53 -> "F"
+//            else -> null
+//        }
+//        var dispatchMethod: Method? = null
+//        if (dispatchMethodName != null) {
+//            dispatchMethod = XposedHelpers2.findMethodExactIfExists(
+//                ClazzN.BaseChattingUIFragment,
+//                context.classLoader,
+//                dispatchMethodName,
+//                //==int.class
+//                java.lang.Integer.TYPE,
+//                Runnable::class.java,
+//            )
+//        }
+//
+//        if (dispatchMethod == null) {
+//            LogUtil.w("dispatchMethod compat is null")
+//            //找不到，尝试根据参数类型查找
+//            val dispatchMethodArray = XposedHelpers2.findMethodsByExactParameters(
+//                ClazzN.from(ClazzN.BaseChattingUIFragment),
+//                Void.TYPE,
+//                java.lang.Integer.TYPE,
+//                Runnable::class.java
+//            )
+//            if (!dispatchMethodArray.isNullOrEmpty()) {
+//                dispatchMethod = dispatchMethodArray[0]
+//                LogUtil.w(AppVersionUtil.getSmartVersionName(), "guess dispatchMethod method： ", dispatchMethod)
+//            }
+//
+//        }
+//        LogUtil.d("hook dispatchMethod --> ", dispatchMethod)
+//        if (dispatchMethod == null) {
+//            return
+//        }
+//        //com.tencent.mm.ui.chatting.ChattingUIProxy.onInit往下调用，直到onEnterBegin调用
+//        XposedHelpers2.hookMethod(dispatchMethod, object : XC_MethodHook2() {
+//            val tagConst = "chatting-I"
+//            val enterAction = EnterChattingHookAction(context, lpparam, tagConst)
+//            val doResumeAction = DoResumeAction(context, lpparam, tagConst)
+//
+//            override fun afterHookedMethod(param: MethodHookParam) {
+//                // onEnterBegin后，调用的函数的参数常量，啥意思不知道
+////                    LogUtil.d("after I method call, first param：", param.args[0])
+//                LogUtil.d("after I method call, param length:", param.args)
+//                when (param.args[0]) {
+//                    //onEnterBegin
+//                    128 -> {
+//                        try {
+//                            enterAction.handle(param)
+//                        } catch (e: Exception) {
+//                            LogUtil.e("enter chattingUI error", e)
+//                        }
+//                    }
+//                    //doResume
+//                    8 -> {
+//                        try {
+//                            doResumeAction.handle(param)
+//                        } catch (e: Exception) {
+//                            LogUtil.e("doResume chattingUI error", e)
+//                        }
+//                    }
+//                }
+//            }
+//        })
+//
+
+
+    }
+
+}
+
+class EnterChattingHookAction(
+    val context: Context,
+    val lpparam: XC_LoadPackage.LoadPackageParam,
+    val tagConst: String
+) {
+    fun handle(param: XC_MethodHook.MethodHookParam) {
+        val fragmentObj = param.thisObject
+        LogUtil.w("enter chattingUI")
+        //估计是class冲突，无法强转Fragment，改为反射获取
+        val arguments = ReflectUtil.invokeMethod(fragmentObj, "getArguments") as Bundle?
+        val activity = ReflectUtil.invokeMethod(fragmentObj, "getActivity") as Activity
+
+        if (arguments == null) {
+            LogUtil.w("chattingUI's arguments is null")
+            return
+        }
+        LogUtil.d("hook onEnterBegin ", arguments)
+        val chatUser = arguments.getString("Chat_User")
+        if (chatUser == null || chatUser.isEmpty()) {
+            return
+        }
+        //命中配置的微信号
+        if (WXMaskPlugin.containChatUser(chatUser)) {
+            hideChatListUI(fragmentObj, activity, chatUser)
+        } else {
+            showChatListUI(fragmentObj)
+        }
+
+        handleUserInputMagic(activity, fragmentObj, chatUser)
+        handleShowAddMaskDialog(activity,  fragmentObj, chatUser)
+    }
+
+    private fun handleShowAddMaskDialog(activity: Activity, fragmentObj: Any, chatUser: String) {
+        PluginProviders.from(WXConfigPlugin::class.java).checkShowAddMaskConfigDialog(fragmentObj)
+    }
+
+    private fun handleUserInputMagic(activity: Activity, fragmentObj: Any, chatUser: String) {
+        val userInputView: EditText? = getUserChatEditText(fragmentObj)
+        if (userInputView == null) {
+            return
+        }
+        if (!ConfigUtil.getOptionData().enableChattingKey) {
+            // ignore
+            return
+        }
+
+        userInputView.addTextChangedListener {
+            val editable = it
+            if (editable == null) {
+                return@addTextChangedListener
+            }
+            val text = editable.toElseEmptyString()
+            //LogUtil.d("userInputMagic", "text:", text)
+            when (text) {
+                "#madd" -> {
+                    // 添加
+                    PluginProviders.from(WXConfigPlugin::class.java).showAddMaskDialog(userInputView.context, fragmentObj)
+                    editable.clear()
+                }
+
+                "#mdel" -> {
+                    AlertDialog.Builder(activity)
+                        .setTitle("提示")
+                        .setMessage("是否移除wxid:" + chatUser)
+                        .setNegativeButton("确定") { _, _ ->
+                            ConfigUtil.removeMaskItem(chatUser)
+                            val chatListView: View? = findChatListView(fragmentObj)
+                            if (chatListView != null) {
+                                chatListView.visibility = View.INVISIBLE
+                            }
+                        }
+                        .setNeutralButton("取消") { _, _ ->
+
+                        }
+                        .show()
+                    editable.clear()
+                }
+
+                "#ys" -> {
+                    val chatListView: View? = findChatListView(fragmentObj)
+                    if (chatListView != null) {
+                        chatListView.visibility = View.INVISIBLE
+                    }
+                    editable.clear()
+                }
+
+                "#mshow" -> {
+                    showChatListUI(fragmentObj)
+                    editable.clear()
+                }
+                "#mcopyId" -> {
+                    ClipboardUtil.copy(chatUser)
+                    ToastUtil.show(activity, "已复制wxid:" + chatUser)
+                    editable.clear()
+                }
+            }
+        }
+    }
+
+    /**
+     * 判断用户输入是否为#config
+     */
+    private fun isUserInputCopyId(fragmentObj: Any): Boolean {
+        return "#mcopyId" == getUserChatEditText(fragmentObj).toElseEmptyString()
+    }
+
+    /**
+     * 获取用户输入框
+     */
+    private fun getUserChatEditText(fragmentObj: Any): EditText? {
+        return XposedHelpers2.callMethod<View?>(fragmentObj, "findViewById", ResUtil.getViewId("bkk"))?.let {
+            LogUtil.d("MMFlexEditText", it)
+            ChildDeepCheck().filter(it) { child ->
+                LogUtil.d("MMEditText", child)
+                child is EditText
+            }?.firstOrNull()?.let {
+                it as EditText
+            }
+        }
+    }
+
+    private fun findChatListView(fragmentObj: Any): View? {
+        var listView = runCatching {
+            ReflectUtil.invokeMethod(fragmentObj, "getListView") as View
+        }.getOrNull()
+        if (listView == null) {
+            listView = runCatching {
+                // Res com.tencent.mm.ui.chatting.view.MMChattingListView under com.tencent.mm.pluginsdk.ui.chat.ChattingUILayout
+                val mmListViewId =
+                    if (AppVersionUtil.getVersionCode() < Constrant.WX_CODE_8_0_42) {
+                        ResUtil.getViewId("b5n")
+                    } else if (AppVersionUtil.getVersionCode() == Constrant.WX_CODE_PLAY_8_0_42) {
+                        ResUtil.getViewId("bnu")
+                    } else {
+                        ResUtil.getViewId("bm6")
+                    }
+                XposedHelpers2.callMethod(fragmentObj, "findViewById", mmListViewId) as View
+            }.getOrNull()
+
+        }
+        if (listView == null) {
+            listView = runCatching {
+                val MMListViewClazz = XposedHelpers2.findClassIfExists(
+                    "com.tencent.mm.ui.chatting.view.MMChattingListView",
+                    context.classLoader
+                )
+                if (MMListViewClazz == null) {
+                    null
+                } else {
+                    val mmListViewField =
+                        XposedHelpers2.findFirstFieldByExactType(fragmentObj.javaClass, MMListViewClazz)
+                    val mmListView = mmListViewField.get(fragmentObj)
+                    mmListView as View
+//                    XposedHelpers2.callMethod(mmListView, "getListView") as View
+                }
+            }.getOrNull()
+            LogUtil.w("guess ChatListView for：", listView)
+        }
+        LogUtil.d("find ChatListView result：", listView)
+        return listView
+    }
+
+    private fun showChatListUI(fragmentObj: Any) {
+        val chatListView: View? = findChatListView(fragmentObj)
+        if (chatListView != null) {
+            chatListView.visibility = View.VISIBLE
+            QuickCountClickListenerUtil.unRegister(chatListView.parent as? View?)
+        } else {
+            showChatListUIFromMask(fragmentObj)
+        }
+    }
+
+    //恢复聊天页原先的ui
+    private fun showChatListUIFromMask(fragmentObj: Any) {
+        val contentView = ReflectUtil.invokeMethod(fragmentObj, "getView") as? ViewGroup?
+        val maskView = contentView?.findViewWithTag<View?>(tagConst)
+        if (maskView != null) {
+            (maskView.parent as? ViewGroup)?.removeView(maskView)
+        }
+    }
+
+    private fun hideChatListUI(fragmentObj: Any, activity: Activity, chatUser: String) {
+        val maskItem = try {
+            ConfigUtil.getMaskList().first {
+                it.maskId == chatUser
+            }
+        } catch (e: Exception) {
+            LogUtil.w(e)
+            return
+        }
+
+        val chatListView = findChatListView(fragmentObj)
+        if (chatListView != null) {
+            chatListView.visibility = View.INVISIBLE
+
+            val quick = QuickTemporaryBean(ConfigUtil.getTemporaryJson() ?: JsonObject())
+            QuickCountClickListenerUtil.register(chatListView.parent as? View?, quick.clickCount, quick.duration) {
+                chatListView.visibility = View.VISIBLE
+            }
+            LogUtil.i("hide chatListView by setVisible")
+        } else {
+            hideListViewUIByMask(fragmentObj)
+            LogUtil.i("hide chatListView by add Mask")
+        }
+
+        if (Constrant.WX_MASK_TIP_MODE_SILENT == maskItem.tipMode) {
+            // 静默模式，不弹提示框
+        } else if (Constrant.CONFIG_TIP_MODE_ALERT == maskItem.tipMode) {
+            handleAlertMode(activity, maskItem)
+        }
+
+    }
+
+    private fun handleAlertMode(uiContext: Context, item: MaskItemBean) {
+        //提示模式
+        AlertDialog.Builder(uiContext)
+            .setTitle("提示")
+            .setIcon(uiContext.applicationInfo.icon)
+            .setMessage(MaskItemBean.TipData.from(item).mess)
+            .setNegativeButton("知道了", null)
+            .show()
+    }
+
+    //对聊天页面添加水印，进行糊脸
+    private fun hideListViewUIByMask(fragmentObj: Any) {
+        //糊界面一脸
+        val contentView = ReflectUtil.invokeMethod(fragmentObj, "getView") as? ViewGroup?
+        contentView?.let {
+            // Res com.tencent.mm.pluginsdk.ui.chat.ChattingContent under com.tencent.mm.pluginsdk.ui.chat.ChattingUILayout
+            val pvId =
+                if (AppVersionUtil.getVersionCode() == Constrant.WX_CODE_PLAY_8_0_42) {
+                    ResUtil.getViewId("bm7")
+                } else {
+                    ResUtil.getViewId("b49")
+                }
+            val parent = contentView.findViewById<ViewGroup>(pvId)
+            var maskView = it.findViewWithTag<View>(tagConst)
+            if (maskView == null) {
+                maskView = View(it.context).also { child ->
+                    child.tag = tagConst
+                    child.background = ColorDrawable(0xFFEDEDED.toInt())
+                    child.translationZ = 9999f
+                }
+                parent.addView(
+                    maskView,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        }
+
+    }
+
+
+}

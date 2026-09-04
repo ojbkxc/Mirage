@@ -14,8 +14,8 @@ android {
         applicationId = "wx.mirage"
         minSdk = 26
         targetSdk = 34
-        versionCode = 104
-        versionName = "1.0.4"
+        versionCode = 110
+        versionName = "1.1.0"
     }
     
     buildTypes {
@@ -52,4 +52,16 @@ dependencies {
     
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
+
+    // baseutils（core 与 base aar 同 namespace，AGP9 冲突；
+    // 两 jar 类零重叠，故提取 classes.jar 到 libs 直接引用）
+    implementation(files("libs/base-utils.jar", "libs/base-utils-core.jar"))
+    implementation("com.github.Mingyueyixi.lposed:xposed-api2:a88cf0c651")
+    implementation("com.github.Mingyueyixi.lposed:plugin:a88cf0c651")
+
+    // Kotlin
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.3.20")
+
+    // wcdb（编译期引用，运行时由微信进程提供）
+    compileOnly("com.tencent.wcdb:wcdb-android:1.1-19")
 }
