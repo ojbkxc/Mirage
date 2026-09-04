@@ -204,10 +204,10 @@ object ChatTitleLongPressHook : HookLifecycleListener {
             } catch (_: Throwable) {}
         }
 
-        // 2. 通过 getArguments / Intent
+        // 2. 通过 getArguments / Intent（"Chat_User" 为微信 8.x 真实 key，wxmask 验证）
         try {
             val args = XposedHelpers.callMethod(fragment, "getArguments")
-            val intentKeys = arrayOf("Chat_Username", "Single_chat_username", "Chat_User", "username")
+            val intentKeys = arrayOf("Chat_User", "Chat_Username", "Single_chat_username", "username")
             for (key in intentKeys) {
                 try {
                     val v = XposedHelpers.callMethod(args, "getString", key)
@@ -220,7 +220,7 @@ object ChatTitleLongPressHook : HookLifecycleListener {
         try {
             val activity = XposedHelpers.callMethod(fragment, "getActivity")
             val intent = XposedHelpers.callMethod(activity, "getIntent")
-            val keys = arrayOf("Chat_Username", "Single_chat_username", "Chat_User", "username")
+            val keys = arrayOf("Chat_User", "Chat_Username", "Single_chat_username", "username")
             for (key in keys) {
                 try {
                     val v = XposedHelpers.callMethod(intent, "getStringExtra", key)

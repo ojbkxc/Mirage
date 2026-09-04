@@ -101,6 +101,7 @@ object MiscHook : HookLifecycleListener {
 
     private fun initFallback(classLoader: ClassLoader) {
         val candidates = listOf(
+            // 存储空间清理页（隐藏密友聊天数据占用，参照 Inkhide 存储空间隐藏）
             "com.tencent.mm.plugin.clean.ui.CleanUI",
             "com.tencent.mm.plugin.clean.ui.StorageCleanUI",
             "com.tencent.mm.ui.tools.MMListPopupWindow",

@@ -343,6 +343,55 @@ object ChatInputHook : HookLifecycleListener {
                 showCurrentChatWxId()
                 clearEditText()
             }
+
+            // ===== 快捷口令（参照 Inkhide/wxmask 交互）=====
+            text == "#add" -> {
+                val wxId = ChatTitleLongPressHook.extractWxIdFrom(currentChatHost ?: return)
+                if (!wxId.isNullOrEmpty()) {
+                    ConfigManager.addHiddenWxId(context, wxId)
+                    LogUtil.i(TAG, "Command: #add $wxId")
+                    android.widget.Toast.makeText(
+                        context, "Mirage: 已隐藏当前聊天对象 $wxId", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    android.widget.Toast.makeText(
+                        context, "Mirage: 未能识别当前聊天对象", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                clearEditText()
+            }
+
+            text == "#del" -> {
+                val wxId = ChatTitleLongPressHook.extractWxIdFrom(currentChatHost ?: return)
+                if (!wxId.isNullOrEmpty()) {
+                    ConfigManager.removeHiddenWxId(context, wxId)
+                    TempUnhideManager.restoreForFriend(wxId)
+                    LogUtil.i(TAG, "Command: #del $wxId")
+                    android.widget.Toast.makeText(
+                        context, "Mirage: 已取消隐藏 $wxId", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    android.widget.Toast.makeText(
+                        context, "Mirage: 未能识别当前聊天对象", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                clearEditText()
+            }
+
+            text == "#copyId" -> {
+                val wxId = ChatTitleLongPressHook.extractWxIdFrom(currentChatHost ?: return)
+                if (!wxId.isNullOrEmpty()) {
+                    try {
+                        val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                                as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("wxid", wxId))
+                        android.widget.Toast.makeText(
+                            context, "Mirage: 已复制 wxId $wxId", android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    } catch (_: Throwable) {}
+                }
+                clearEditText()
+            }
         }
     }
 
