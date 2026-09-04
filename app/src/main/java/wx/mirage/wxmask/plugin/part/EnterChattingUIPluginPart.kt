@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.text.InputType
 import androidx.core.widget.addTextChangedListener
 import com.google.gson.JsonObject
 import com.lu.lposed.api2.XC_MethodHook2
@@ -24,6 +25,7 @@ import wx.mirage.wxmask.ClazzN
 import wx.mirage.wxmask.Constrant
 import wx.mirage.wxmask.bean.MaskItemBean
 import wx.mirage.wxmask.bean.QuickTemporaryBean
+import wx.mirage.wxmask.bean.CipherTemporaryBean
 import wx.mirage.wxmask.plugin.WXConfigPlugin
 import wx.mirage.wxmask.plugin.WXMaskPlugin
 import wx.mirage.wxmask.util.AppVersionUtil
@@ -370,9 +372,15 @@ class EnterChattingHookAction(
         if (chatListView != null) {
             chatListView.visibility = View.INVISIBLE
 
-            val quick = QuickTemporaryBean(ConfigUtil.getTemporaryJson() ?: JsonObject())
-            QuickCountClickListenerUtil.register(chatListView.parent as? View?, quick.clickCount, quick.duration) {
-                chatListView.visibility = View.VISIBLE
+            val cipher = CipherTemporaryBean.from(ConfigUtil.getCipherTemporaryJson())
+            if (cipher.enable) {
+                // 密码模式：点击隐藏区域弹密码输入框，验证通过后临时显示
+                registerCipherListener(activity, chatListView, cipher)
+            } else {
+                val quick = QuickTemporaryBean(ConfigUtil.getTemporaryJson() ?: JsonObject())
+                QuickCountClickListenerUtil.register(chatListView.parent as? View?, quick.clickCount, quick.duration) {
+                    chatListView.visibility = View.VISIBLE
+                }
             }
             LogUtil.i("hide chatListView by setVisible")
         } else {
@@ -396,6 +404,39 @@ class EnterChattingHookAction(
             .setMessage(MaskItemBean.TipData.from(item).mess)
             .setNegativeButton("知道了", null)
             .show()
+    }
+
+    /**
+     * 密码模式：点击隐藏的聊天区域弹出数字密码输入框，
+     * 验证通过后临时显示聊天记录（时长为配置的 duration）
+     */
+    private fun registerCipherListener(activity: Activity, chatListView: View, cipher: CipherTemporaryBean) {
+        val parentView = chatListView.parent as? View ?: chatListView
+        parentView.setOnClickListener {
+            val editText = EditText(activity).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                hint = "输入解除密码"
+                filters = arrayOf(android.text.InputFilter.LengthFilter(12))
+            }
+            AlertDialog.Builder(activity)
+                .setTitle("验证")
+                .setView(editText)
+                .setNegativeButton("确定") { _, _ ->
+                    if (editText.text.toString() == cipher.password) {
+                        chatListView.visibility = View.VISIBLE
+                        ToastUtil.show("已临时解除 ${cipher.duration / 1000} 秒")
+                        chatListView.postDelayed({
+                            if (chatListView.visibility == View.VISIBLE) {
+                                chatListView.visibility = View.INVISIBLE
+                            }
+                        }, cipher.duration)
+                    } else {
+                        ToastUtil.show("密码错误")
+                    }
+                }
+                .setNeutralButton("取消", null)
+                .show()
+        }
     }
 
     //对聊天页面添加水印，进行糊脸

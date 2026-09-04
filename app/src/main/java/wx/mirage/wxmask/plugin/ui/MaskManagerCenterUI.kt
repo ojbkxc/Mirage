@@ -27,6 +27,7 @@ import com.lu.magic.util.ripple.RectangleRippleBuilder
 import com.lu.magic.util.ripple.RippleApplyUtil
 import wx.mirage.wxmask.Constrant
 import wx.mirage.wxmask.bean.QuickTemporaryBean
+import wx.mirage.wxmask.bean.CipherTemporaryBean
 import wx.mirage.wxmask.plugin.ui.view.AttachUI
 import wx.mirage.wxmask.ui.adapter.SpinnerListAdapter
 import wx.mirage.wxmask.util.BarUtils
@@ -48,6 +49,8 @@ class MaskManagerCenterUI @JvmOverloads constructor(
     private var mViewWxDbPwSwitch: Switch? = null
     var mQuickClickCountEdit: EditText? = null
     var mQuickClickDurationEdit: EditText? = null
+    var mCipherPasswordEdit: EditText? = null
+    var mCipherDurationEdit: EditText? = null
     val mOptionData = ConfigUtil.getOptionData()
     var mTravelTimeEditView: EditText? = null
 
@@ -118,14 +121,21 @@ class MaskManagerCenterUI @JvmOverloads constructor(
         }
 
         val quickTempLocal = QuickTemporaryBean(ConfigUtil.getTemporaryJson() ?: JsonObject())
+        val cipherTempLocal = CipherTemporaryBean.from(ConfigUtil.getTemporaryJson())
         val optionDataLocal = ConfigUtil.getOptionData()
 
         val uiQuickTemp = QuickTemporaryBean().apply {
             duration = mQuickClickDurationEdit?.text.toIntElse(duration)
             clickCount = mQuickClickCountEdit?.text.toIntElse(clickCount)
         }
+        val uiCipherTemp = CipherTemporaryBean().apply {
+            password = mCipherPasswordEdit?.text?.toString()?.trim() ?: ""
+            duration = ((mCipherDurationEdit?.text.toIntElse(duration / 1000)) * 1000).let {
+                if (it <= 0) 15000 else it
+            }
+        }
         mOptionData.travelTime = mTravelTimeEditView.dayText2Mills(0L)
-        if (quickTempLocal.toJson() != (uiQuickTemp.toJson()) || mOptionData.toJson() != optionDataLocal.toJson()) {
+        if (quickTempLocal.toJson() != (uiQuickTemp.toJson()) || cipherTempLocal.toJson() != uiCipherTemp.toJson() || mOptionData.toJson() != optionDataLocal.toJson()) {
             //数据发生了变更
             AlertDialog.Builder(context)
                 .setTitle("提示")
@@ -135,7 +145,9 @@ class MaskManagerCenterUI @JvmOverloads constructor(
                     super.dismiss()
                 }
                 .setPositiveButton("确定") { _, _ ->
+                    // 密码保存进 cipher 临时对象；quick click 保留原有配置
                     ConfigUtil.setTemporary(uiQuickTemp)
+                    ConfigUtil.setCipherTemporary(uiCipherTemp)
                     ConfigUtil.setOptionData(mOptionData)
                     super.dismiss()
                 }.show()
@@ -198,6 +210,31 @@ class MaskManagerCenterUI @JvmOverloads constructor(
                 addView(ItemSubEdit(quickTemp.clickCount.toElseString("5")).apply {
                     mQuickClickCountEdit = this
                     inputType = InputType.TYPE_CLASS_NUMBER
+                })
+            })
+
+            val cipherTemp = CipherTemporaryBean.from(ConfigUtil.getCipherTemporaryJson())
+            addView(LinearLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    topMargin = 4.dp
+                }
+                addView(ItemSubTitle("解除密码（数字）："))
+                addView(ItemSubEdit(cipherTemp.password).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    mCipherPasswordEdit = this
+                })
+            })
+
+            addView(LinearLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    topMargin = 4.dp
+                }
+                addView(ItemSubTitle("解除后显示时长/秒："))
+                addView(ItemSubEdit((cipherTemp.duration / 1000).toString()).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    mCipherDurationEdit = this
                 })
             })
 

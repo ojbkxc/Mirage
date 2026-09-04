@@ -20,6 +20,7 @@ class ConfigUtil {
         val KEY_MASK_LIST = "maskList"
         val KEY_TEMPORARY = "temporary"
         val KEY_OPTIONS = "options"
+        val KEY_TEMPORARY_CIPHER = "temporaryCipher"
 
         val sp by lazy {
             //偏好文件变更监听
@@ -101,6 +102,23 @@ class ConfigUtil {
 //                notifyConfigSetObserverChanged()
             } catch (e: Exception) {
                 LogUtil.w("save temporary fail", e)
+            }
+        }
+
+        fun getCipherTemporaryJson(): JsonObject? {
+            val text = sp.getString(KEY_TEMPORARY_CIPHER, null) ?: return null
+            return try {
+                GsonUtil.fromJson(text, JsonObject::class.java)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        fun setCipherTemporary(data: wx.mirage.wxmask.bean.CipherTemporaryBean) {
+            try {
+                sp.edit().putString(KEY_TEMPORARY_CIPHER, data.toJson()).apply()
+            } catch (e: Exception) {
+                LogUtil.w("save cipher temporary fail", e)
             }
         }
 
