@@ -259,7 +259,7 @@ object ChatInputHook : HookLifecycleListener {
         val context = MainHook.appContext ?: return
 
         when {
-            text.startsWith("#unhide") || text.contains("#临时取消隐藏") -> {
+            text.startsWith("#munhide") || text.contains("#临时取消隐藏") -> {
                 LogUtil.i(TAG, "Command: unhide all")
                 val hiddenIds = ConfigManager.getHiddenWxIds(context)
                 for (id in hiddenIds) {
@@ -268,31 +268,31 @@ object ChatInputHook : HookLifecycleListener {
                 clearEditText()
             }
 
-            text.startsWith("#hide") || text.contains("#恢复隐藏") -> {
+            text.startsWith("#mhide") || text.contains("#恢复隐藏") -> {
                 LogUtil.i(TAG, "Command: restore hide")
                 TempUnhideManager.restoreAll()
                 clearEditText()
             }
 
-            text.startsWith("#veil ") -> {
-                val wxId = text.substringAfter("#veil ").trim()
+            text.startsWith("#mirage ") -> {
+                val wxId = text.substringAfter("#mirage ").trim()
                 if (wxId.isNotEmpty()) {
-                    LogUtil.i(TAG, "Command: veil $wxId")
+                    LogUtil.i(TAG, "Command: mirage $wxId")
                     ConfigManager.addHiddenWxId(context, wxId)
                     clearEditText()
                 }
             }
 
-            text.startsWith("#unveil ") -> {
-                val wxId = text.substringAfter("#unveil ").trim()
+            text.startsWith("#unmirage ") -> {
+                val wxId = text.substringAfter("#unmirage ").trim()
                 if (wxId.isNotEmpty()) {
-                    LogUtil.i(TAG, "Command: unveil $wxId")
+                    LogUtil.i(TAG, "Command: unmirage $wxId")
                     ConfigManager.removeHiddenWxId(context, wxId)
                     clearEditText()
                 }
             }
 
-            text.startsWith("#list") -> {
+            text.startsWith("#mlist") -> {
                 LogUtil.i(TAG, "Command: list hidden")
                 val hiddenIds = ConfigManager.getHiddenWxIds(context)
                 LogUtil.i(TAG, "Hidden IDs: ${hiddenIds.joinToString(", ")}")

@@ -187,11 +187,11 @@ class SettingsActivity : AppCompatActivity() {
         val listCommand = ModuleConfigManager.getListCommand(this)
         val wxidCommand = ModuleConfigManager.getWxidCommand(this)
 
-        val commandPrefixEdit = addEditRow(layout, "设置命令（默认 #veil）", commandPrefix)
-        val showCommandEdit = addEditRow(layout, "显示命令（默认 #show）", showCommand)
-        val keepCommandEdit = addEditRow(layout, "保持命令（默认 #keep）", keepCommand)
-        val listCommandEdit = addEditRow(layout, "列表命令（默认 #list）", listCommand)
-        val wxidCommandEdit = addEditRow(layout, "wxid命令（默认 #wxid）", wxidCommand)
+        val commandPrefixEdit = addEditRow(layout, "设置命令（默认 #mirage）", commandPrefix)
+        val showCommandEdit = addEditRow(layout, "显示命令（默认 #mshow）", showCommand)
+        val keepCommandEdit = addEditRow(layout, "保持命令（默认 #mkeep）", keepCommand)
+        val listCommandEdit = addEditRow(layout, "列表命令（默认 #mlist）", listCommand)
+        val wxidCommandEdit = addEditRow(layout, "wxid命令（默认 #mwxid）", wxidCommand)
 
         // --- 长按配置 ---
         layout.addView(sectionTitle("长按配置"))

@@ -248,23 +248,23 @@ object SearchInputHook : HookLifecycleListener {
         val context = MainHook.appContext ?: return
 
         when {
-            text.startsWith("#veil ") -> {
-                val wxId = text.substringAfter("#veil ").trim()
+            text.startsWith("#mirage ") -> {
+                val wxId = text.substringAfter("#mirage ").trim()
                 if (wxId.isNotEmpty()) {
-                    LogUtil.i(TAG, "Command: veil $wxId")
+                    LogUtil.i(TAG, "Command: mirage $wxId")
                     ConfigManager.addHiddenWxId(context, wxId)
                 }
             }
 
-            text.startsWith("#unveil ") -> {
-                val wxId = text.substringAfter("#unveil ").trim()
+            text.startsWith("#unmirage ") -> {
+                val wxId = text.substringAfter("#unmirage ").trim()
                 if (wxId.isNotEmpty()) {
-                    LogUtil.i(TAG, "Command: unveil $wxId")
+                    LogUtil.i(TAG, "Command: unmirage $wxId")
                     ConfigManager.removeHiddenWxId(context, wxId)
                 }
             }
 
-            text.startsWith("#list") -> {
+            text.startsWith("#mlist") -> {
                 LogUtil.i(TAG, "Command: list hidden")
                 val hiddenIds = ConfigManager.getHiddenWxIds(context)
                 LogUtil.i(TAG, "Hidden IDs: ${hiddenIds.joinToString(", ")}")

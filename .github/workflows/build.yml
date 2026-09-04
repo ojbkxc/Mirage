@@ -68,14 +68,39 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+          ls -la release.keystore
+
       - name: Build Release APK
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
         run: ./gradlew --no-daemon --stacktrace assembleRelease
 
-      - name: Rename APK
+      - name: Sign APK
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          # 用 build-tools 的 apksigner 对 unsigned APK 做 v2+v3 签名
+          BUILDTOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          UNSIGNED=app/build/outputs/apk/release/app-release-unsigned.apk
+          SIGNED="release/Mirage-v${{ steps.version.outputs.version }}-release.apk"
           mkdir -p release
-          cp app/build/outputs/apk/release/app-release-unsigned.apk "release/Mirage-v${VERSION}-release.apk"
+          "$BUILDTOOLS/zipalign" -f 4 "$UNSIGNED" release/aligned.apk
+          "$BUILDTOOLS/apksigner" sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out "$SIGNED" \
+            release/aligned.apk
+          "$BUILDTOOLS/apksigner" verify --print-certs "$SIGNED" | head -5
+
+      - name: Clean keystore
+        if: always()
+        run: rm -f release.keystore release/aligned.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -86,18 +111,18 @@ jobs:
             ## Mirage ${{ steps.version.outputs.version }}
 
             ### 功能
-            - 微信朋友圈净化（隐藏广告、推荐流）
-            - 联系人列表增强
-            - 会话消息管理
-            - 群成员增强
-            - 通知栏优化
-            - 搜索增强
-            - 标签管理
+            - 好友隐身（不删不屏蔽，主页/聊天/联系人/朋友圈/搜索/群成员全场景隐藏）
+            - 主页伪装（伪装成另一位好友）
+            - 语音/视频通话拦截、通知拦截
+            - 消息防撤回、密友消息提示
+            - 朋友圈去广告
+            - 指令系统（#mirage wxid 添加 / #unmirage 移除 / #munhide 临时显示 / #mhide 恢复 / #mlist 列表）
+            - 长按空白处呼出、备份/恢复
 
             ### 安装
             - 需要 Xposed 框架 (LSPosed / LSPatch)
-            - 下载 APK 安装后，在 Xposed 管理器中启用模块
-            - 重启微信生效
+            - 下载 APK 安装后，在 Xposed 管理器中启用模块，作用域勾选微信
+            - 强制停止微信后重新打开生效
 
             ### 变更
             详见 [CHANGELOG.md](CHANGELOG.md)

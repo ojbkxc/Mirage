@@ -108,20 +108,20 @@ object Constants {
 
     // ========== 默认指令 ==========
 
-    /** 默认命令前缀 */
-    const val DEFAULT_COMMAND_PREFIX = "#veil"
+    /** 默认命令前缀（与面纱 #vail 区分） */
+    const val DEFAULT_COMMAND_PREFIX = "#mirage"
 
     /** 默认显示命令 */
-    const val DEFAULT_SHOW_COMMAND = "#show"
+    const val DEFAULT_SHOW_COMMAND = "#mshow"
 
     /** 默认保持命令 */
-    const val DEFAULT_KEEP_COMMAND = "#keep"
+    const val DEFAULT_KEEP_COMMAND = "#mkeep"
 
     /** 默认列表命令 */
-    const val DEFAULT_LIST_COMMAND = "#list"
+    const val DEFAULT_LIST_COMMAND = "#mlist"
 
     /** 默认 wxid 命令 */
-    const val DEFAULT_WXID_COMMAND = "#wxid"
+    const val DEFAULT_WXID_COMMAND = "#mwxid"
 
     /** 默认长按时长（毫秒） */
     const val DEFAULT_LONG_PRESS_DURATION = 5000

@@ -44,11 +44,11 @@ object ModuleConfigManager {
 
     // ===== 默认值 =====
 
-    private const val DEFAULT_COMMAND_PREFIX = "#veil"
-    private const val DEFAULT_SHOW_COMMAND = "#show"
-    private const val DEFAULT_KEEP_COMMAND = "#keep"
-    private const val DEFAULT_LIST_COMMAND = "#list"
-    private const val DEFAULT_WXID_COMMAND = "#wxid"
+    private const val DEFAULT_COMMAND_PREFIX = "#mirage"
+    private const val DEFAULT_SHOW_COMMAND = "#mshow"
+    private const val DEFAULT_KEEP_COMMAND = "#mkeep"
+    private const val DEFAULT_LIST_COMMAND = "#mlist"
+    private const val DEFAULT_WXID_COMMAND = "#mwxid"
     private const val DEFAULT_LONG_PRESS_DURATION = 5000
     private const val DEFAULT_LONG_PRESS_BLANK_DURATION = 10000
     private const val DEFAULT_ENABLE_LONG_PRESS = true
@@ -62,7 +62,7 @@ object ModuleConfigManager {
     // ========================================================================
 
     /**
-     * 获取命令前缀（默认 "#veil"）。
+     * 获取命令前缀（默认 "#mirage"）。
      * 用户在聊天输入框或搜索框中输入此前缀触发模块功能。
      */
     fun getCommandPrefix(context: Context): String {
@@ -78,7 +78,7 @@ object ModuleConfigManager {
     }
 
     /**
-     * 获取 #show 命令（默认 "#show"）。
+     * 获取 #mshow 命令（默认 "#mshow"）。
      */
     fun getShowCommand(context: Context): String {
         return getSP(context).getString(KEY_SHOW_COMMAND, DEFAULT_SHOW_COMMAND) ?: DEFAULT_SHOW_COMMAND
@@ -93,7 +93,7 @@ object ModuleConfigManager {
     }
 
     /**
-     * 获取 #keep 命令（默认 "#keep"）。
+     * 获取 #mkeep 命令（默认 "#mkeep"）。
      */
     fun getKeepCommand(context: Context): String {
         return getSP(context).getString(KEY_KEEP_COMMAND, DEFAULT_KEEP_COMMAND) ?: DEFAULT_KEEP_COMMAND
@@ -108,7 +108,7 @@ object ModuleConfigManager {
     }
 
     /**
-     * 获取 #list 命令（默认 "#list"）。
+     * 获取 #mlist 命令（默认 "#mlist"）。
      */
     fun getListCommand(context: Context): String {
         return getSP(context).getString(KEY_LIST_COMMAND, DEFAULT_LIST_COMMAND) ?: DEFAULT_LIST_COMMAND
@@ -123,7 +123,7 @@ object ModuleConfigManager {
     }
 
     /**
-     * 获取 #wxid 命令（默认 "#wxid"）。
+     * 获取 #mwxid 命令（默认 "#mwxid"）。
      */
     fun getWxidCommand(context: Context): String {
         return getSP(context).getString(KEY_WXID_COMMAND, DEFAULT_WXID_COMMAND) ?: DEFAULT_WXID_COMMAND
