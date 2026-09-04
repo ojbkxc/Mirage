@@ -179,6 +179,7 @@ object ChatInputHook : HookLifecycleListener {
         try {
             val activity = param.thisObject
             HookMetrics.recordSuccess(TAG)
+            currentChatHost = activity
 
             // 查找 EditText（聊天输入框）
             val editText = findEditText(activity) ?: run {
@@ -198,6 +199,44 @@ object ChatInputHook : HookLifecycleListener {
             LogUtil.i(TAG, "TextWatcher attached to chat input")
         } catch (e: Throwable) {
             LogUtil.e(TAG, "Error attaching TextWatcher: ${e.message}", e)
+        }
+    }
+
+    /** 当前聊天页宿主（Fragment/Activity），用于 #mwxid 提取上下文 */
+    @Volatile
+    private var currentChatHost: Any? = null
+
+    /**
+     * 显示当前聊天对象的 wxId（面纱 #wxid 同款体验）。
+     * 从聊天页宿主中提取 wxId，弹窗显示并复制到剪贴板。
+     */
+    private fun showCurrentChatWxId() {
+        try {
+            val host = currentChatHost ?: return
+            val wxId = ChatTitleLongPressHook.extractWxIdFrom(host)
+
+            if (wxId.isNullOrEmpty()) {
+                android.widget.Toast.makeText(
+                    MainHook.appContext, "Mirage: 未能识别当前聊天对象", android.widget.Toast.LENGTH_SHORT
+                ).show()
+                return
+            }
+
+            val ctx = MainHook.appContext ?: return
+            // 复制到剪贴板，便于粘贴到伪装目标输入框
+            try {
+                val clipboard = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                        as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("wxid", wxId))
+            } catch (_: Throwable) {}
+
+            android.app.AlertDialog.Builder(ctx)
+                .setTitle("当前聊天对象 wxId")
+                .setMessage("$wxId\n\n(已复制到剪贴板，可直接粘贴到伪装目标输入框)")
+                .setPositiveButton("确定", null)
+                .show()
+        } catch (e: Throwable) {
+            LogUtil.e(TAG, "showCurrentChatWxId failed: ${e.message}", e)
         }
     }
 
@@ -296,6 +335,12 @@ object ChatInputHook : HookLifecycleListener {
                 LogUtil.i(TAG, "Command: list hidden")
                 val hiddenIds = ConfigManager.getHiddenWxIds(context)
                 LogUtil.i(TAG, "Hidden IDs: ${hiddenIds.joinToString(", ")}")
+                clearEditText()
+            }
+
+            text.startsWith("#mwxid") -> {
+                LogUtil.i(TAG, "Command: show current chat wxid")
+                showCurrentChatWxId()
                 clearEditText()
             }
         }

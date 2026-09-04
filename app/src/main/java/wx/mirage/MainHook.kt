@@ -10,6 +10,7 @@ import org.luckypray.dexkit.DexKitBridge
 import wx.mirage.config.ConfigManager
 import wx.mirage.config.HookStatus
 import wx.mirage.hook.ChatInputHook
+import wx.mirage.hook.ChatTitleLongPressHook
 import wx.mirage.hook.ContactHook
 import wx.mirage.hook.ConversationHook
 import wx.mirage.hook.ConversationLongClickHook
@@ -183,6 +184,8 @@ class MainHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
 
             val hookModules = listOf(
                 Triple("ChatInputHook", { ChatInputHook.init(lpparam) }, ChatInputHook as HookLifecycleListener),
+                Triple("ChatTitleLongPressHook", { ChatTitleLongPressHook.init(lpparam) }, ChatTitleLongPressHook as HookLifecycleListener),
+                Triple("ChatTitleLongPressHook", { ChatTitleLongPressHook.init(lpparam) }, ChatTitleLongPressHook as HookLifecycleListener),
                 Triple("ContactHook", { ContactHook.init(lpparam) }, ContactHook as HookLifecycleListener),
                 Triple("ConversationHook", { ConversationHook.init(lpparam) }, ConversationHook as HookLifecycleListener),
                 Triple("ConversationLongClickHook", { ConversationLongClickHook.init(lpparam) }, ConversationLongClickHook as HookLifecycleListener),

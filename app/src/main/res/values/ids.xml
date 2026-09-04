@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 聊天页标题长按监听中绑定 wxId 用的 tag id -->
+    <item name="mirage_tag_wxid" type="id" />
+</resources>
