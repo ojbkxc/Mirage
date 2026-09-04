@@ -22,7 +22,11 @@ private constructor(
     var viewWxDbPw: Boolean,
     var travelTime: Long,
     var enableTravelTime: Boolean,
-    var enableChattingKey: Boolean
+    var enableChattingKey: Boolean,
+    /** 密友专属提醒：震动 */
+    var enableAlertVibrate: Boolean,
+    /** 密友专属提醒：顶部标题栏文字加粗 */
+    var enableAlertBoldTitle: Boolean
 ) {
 
 
@@ -41,7 +45,9 @@ private constructor(
                 viewWxDbPw = json.optBoolean("viewWxDbPw", false),
                 travelTime = json.optLong("travelTime", 0L),
                 enableTravelTime = json.optBoolean("enableTravelTime", false),
-                enableChattingKey = json.optBoolean("enableChattingKey", true)
+                enableChattingKey = json.optBoolean("enableChattingKey", true),
+                enableAlertVibrate = json.optBoolean("enableAlertVibrate", false),
+                enableAlertBoldTitle = json.optBoolean("enableAlertBoldTitle", false)
             )
         }
         fun toJson(data: OptionData): String {
@@ -54,6 +60,8 @@ private constructor(
                 put("travelTime", data.travelTime)
                 put("enableTravelTime", data.enableTravelTime)
                 put("enableChattingKey", data.enableChattingKey)
+                put("enableAlertVibrate", data.enableAlertVibrate)
+                put("enableAlertBoldTitle", data.enableAlertBoldTitle)
             }.toString()
         }
 

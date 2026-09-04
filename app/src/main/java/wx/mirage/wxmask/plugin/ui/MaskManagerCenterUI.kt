@@ -309,6 +309,36 @@ class MaskManagerCenterUI @JvmOverloads constructor(
                 layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, ITEM_HEIGHT).apply {
                     gravity = Gravity.CENTER_VERTICAL
                 }
+                addView(ItemSubTitle("密友消息震动提醒"))
+                addView(Switch(context).apply {
+                    layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                    }
+                    isChecked = mOptionData.enableAlertVibrate
+                    setOnCheckedChangeListener { buttonView, isChecked ->
+                        mOptionData.enableAlertVibrate = isChecked
+                    }
+                })
+            })
+            addView(FrameLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, ITEM_HEIGHT).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                }
+                addView(ItemSubTitle("密友消息顶部标题加粗"))
+                addView(Switch(context).apply {
+                    layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                    }
+                    isChecked = mOptionData.enableAlertBoldTitle
+                    setOnCheckedChangeListener { buttonView, isChecked ->
+                        mOptionData.enableAlertBoldTitle = isChecked
+                    }
+                })
+            })
+            addView(FrameLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, ITEM_HEIGHT).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                }
                 addView(ItemSubTitle("查看微信数据库密码").apply {
                     setOnClickListener {
                         handlerWxDbItemClick()

@@ -10,6 +10,7 @@ import wx.mirage.wxmask.plugin.part.EnterChattingUIPluginPart
 import wx.mirage.wxmask.plugin.part.HideMainUIListPluginPart
 import wx.mirage.wxmask.plugin.part.HideSearchListUIPluginPart
 import wx.mirage.wxmask.plugin.part.IgnoreVideoCallPluginPart
+import wx.mirage.wxmask.plugin.part.MaskAlertPluginPart
 import wx.mirage.wxmask.plugin.part.MaskUIManagerPluginPart
 import wx.mirage.wxmask.util.ConfigUtil
 import wx.mirage.wxmask.util.ConfigUtil.ConfigSetObserver
@@ -24,6 +25,7 @@ class WXMaskPlugin : IPlugin, ConfigSetObserver {
     private val hideMainUIListPluginPart = HideMainUIListPluginPart()
     private val emptySingChatHistoryGalleryPluginPart = EmptySingChatHistoryGalleryPluginPart()
     private val maskUIManagerPluginPart = MaskUIManagerPluginPart()
+    private val maskAlertPluginPart = MaskAlertPluginPart()
 //    private val mIgnoreMediaCallPluginPart = IgnoreVideoCallPluginPart()
 
     companion object {
@@ -71,6 +73,7 @@ class WXMaskPlugin : IPlugin, ConfigSetObserver {
         }
         emptySingChatHistoryGalleryPluginPart.handleHook(context, lpparam)
         maskUIManagerPluginPart.handleHook(context, lpparam)
+        maskAlertPluginPart.handleHook(context, lpparam)
 //        mIgnoreMediaCallPluginPart.handleHook(context, lpparam)
     }
 
