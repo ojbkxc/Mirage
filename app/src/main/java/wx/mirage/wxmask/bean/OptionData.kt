@@ -26,7 +26,9 @@ private constructor(
     /** 密友专属提醒：震动 */
     var enableAlertVibrate: Boolean,
     /** 密友专属提醒：顶部标题栏文字加粗 */
-    var enableAlertBoldTitle: Boolean
+    var enableAlertBoldTitle: Boolean,
+    /** 阻止微信热更新 */
+    var enableBlockHotUpdate: Boolean
 ) {
 
 
@@ -47,7 +49,8 @@ private constructor(
                 enableTravelTime = json.optBoolean("enableTravelTime", false),
                 enableChattingKey = json.optBoolean("enableChattingKey", true),
                 enableAlertVibrate = json.optBoolean("enableAlertVibrate", false),
-                enableAlertBoldTitle = json.optBoolean("enableAlertBoldTitle", false)
+                enableAlertBoldTitle = json.optBoolean("enableAlertBoldTitle", false),
+                enableBlockHotUpdate = json.optBoolean("enableBlockHotUpdate", false)
             )
         }
         fun toJson(data: OptionData): String {
@@ -62,6 +65,7 @@ private constructor(
                 put("enableChattingKey", data.enableChattingKey)
                 put("enableAlertVibrate", data.enableAlertVibrate)
                 put("enableAlertBoldTitle", data.enableAlertBoldTitle)
+                put("enableBlockHotUpdate", data.enableBlockHotUpdate)
             }.toString()
         }
 

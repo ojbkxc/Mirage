@@ -339,6 +339,22 @@ class MaskManagerCenterUI @JvmOverloads constructor(
                 layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, ITEM_HEIGHT).apply {
                     gravity = Gravity.CENTER_VERTICAL
                 }
+                addView(ItemSubTitle("阻止微信热更新（防模块失效）"))
+                addView(Switch(context).apply {
+                    layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                        gravity = Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                    }
+                    isChecked = mOptionData.enableBlockHotUpdate
+                    setOnCheckedChangeListener { buttonView, isChecked ->
+                        mOptionData.enableBlockHotUpdate = isChecked
+                        ToastUtil.show(if (isChecked) "已阻止热更新，重启微信生效" else "已允许热更新")
+                    }
+                })
+            })
+            addView(FrameLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, ITEM_HEIGHT).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                }
                 addView(ItemSubTitle("查看微信数据库密码").apply {
                     setOnClickListener {
                         handlerWxDbItemClick()
